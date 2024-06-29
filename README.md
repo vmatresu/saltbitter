@@ -4,12 +4,12 @@ SaltBitter is an open-source toolkit designed for efficient data management and 
 
 ## Features
 
-- **Backend**: Built with Python and FastAPI for high performance and asynchronous capabilities.
-- **Frontend**: Developed using React with TypeScript for a dynamic, type-safe user interface.
-- **Data Visualization**: Utilizes D3.js and Plotly for custom and interactive visualizations.
-- **Database**: Powered by PostgreSQL for robust, relational data handling.
-- **Deployment**: Uses Docker for containerization and Kubernetes on AWS for scalable deployment.
-- **Testing**: Comprehensive testing with PyTest for the backend and React Testing Library with Jest for the frontend.
+- **Backend**: Python with FastAPI for high performance.
+- **Frontend**: React with TypeScript for a dynamic interface.
+- **Data Visualization**: D3.js and Plotly for custom visuals.
+- **Database**: PostgreSQL for robust data handling.
+- **Deployment**: Docker and Kubernetes on AWS.
+- **Testing**: PyTest and React Testing Library with Jest.
 
 ## Getting Started
 
@@ -28,8 +28,12 @@ SaltBitter is an open-source toolkit designed for efficient data management and 
    - **Frontend**: Use `npm start` to run the React application.
 
 4. **Deployment**: 
-   - Use Docker to containerize the application.
-   - Deploy using Kubernetes on AWS.
+   - Use Docker and Kubernetes on AWS.
+
+## Websites
+
+- **saltbitter.com**: Main website featuring project information, documentation, and updates.
+- **saltbitter.org**: Platform for community engagement, including forums and resources for contributors.
 
 ## Contribution
 
@@ -38,7 +42,3 @@ Contributions are welcome! Please fork the repository and submit a pull request.
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
-
----
-
-Feel free to customize any section to better fit your project specifics!
