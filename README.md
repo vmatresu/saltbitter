@@ -15,7 +15,7 @@ SaltBitter is an open-source toolkit designed for efficient data management and 
 
 1. **Clone the Repository**: 
    ```bash
-   git clone https://github.com/yourusername/saltbitter.git
+   git clone https://github.com/vmatresu/saltbitter.git
    cd saltbitter
    ```
 
