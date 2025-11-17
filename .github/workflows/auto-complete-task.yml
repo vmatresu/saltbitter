@@ -13,7 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: read
+      pull-requests: write
+      issues: write
 
     steps:
       - name: Checkout repository
@@ -44,6 +45,7 @@ jobs:
 
       - name: Complete task
         if: steps.extract-task.outputs.has_task == 'true'
+        id: complete-task
         env:
           TASK_ID: ${{ steps.extract-task.outputs.task_id }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -52,10 +54,12 @@ jobs:
           AGENT_ID: ${{ github.event.pull_request.user.login }}
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
         run: |
-          # Find the task file in claimed/ or tasks/
+          # Find the task file in claimed/, tasks/, or completed/
           PROJECT=""
           TASK_FILE=""
+          ALREADY_COMPLETED=false
 
+          # Check claimed/ directory
           for proj in .agents/claimed/*/; do
             if [ -f "${proj}${TASK_ID}.toon" ]; then
               PROJECT=$(basename "$proj")
@@ -64,7 +68,7 @@ jobs:
             fi
           done
 
-          # If not in claimed, check tasks/
+          # Check tasks/ directory
           if [ -z "$TASK_FILE" ]; then
             for proj in .agents/projects/*/tasks/; do
               if [ -f "${proj}${TASK_ID}.toon" ]; then
@@ -75,23 +79,38 @@ jobs:
             done
           fi
 
+          # Check completed/ directory (task may have been manually completed)
           if [ -z "$TASK_FILE" ]; then
-            echo "Task file not found for $TASK_ID"
+            for proj in .agents/completed/*/; do
+              if [ -f "${proj}${TASK_ID}.toon" ]; then
+                PROJECT=$(basename "$proj")
+                TASK_FILE="${proj}${TASK_ID}.toon"
+                ALREADY_COMPLETED=true
+                echo "⚠️  Task already in completed/ - likely manually completed by agent"
+                break
+              fi
+            done
+          fi
+
+          if [ -z "$TASK_FILE" ]; then
+            echo "❌ Task file not found for $TASK_ID in any directory"
             exit 0
           fi
 
           echo "Found task file: $TASK_FILE"
           echo "Project: $PROJECT"
 
-          # Create completed directory if needed
-          mkdir -p ".agents/completed/$PROJECT"
+          # Only move and add metadata if not already completed
+          if [ "$ALREADY_COMPLETED" = false ]; then
+            # Create completed directory if needed
+            mkdir -p ".agents/completed/$PROJECT"
 
-          # Move task to completed
-          COMPLETED_FILE=".agents/completed/$PROJECT/${TASK_ID}.toon"
-          mv "$TASK_FILE" "$COMPLETED_FILE"
+            # Move task to completed
+            COMPLETED_FILE=".agents/completed/$PROJECT/${TASK_ID}.toon"
+            mv "$TASK_FILE" "$COMPLETED_FILE"
 
-          # Add completion metadata
-          cat >> "$COMPLETED_FILE" <<EOF
+            # Add completion metadata
+            cat >> "$COMPLETED_FILE" <<EOF
 
           completion:
            status: completed
@@ -102,36 +121,20 @@ jobs:
            merged_to: $BASE_BRANCH
           EOF
 
-          echo "Task $TASK_ID marked as completed"
+            echo "✅ Task $TASK_ID marked as completed"
+          else
+            echo "ℹ️  Task $TASK_ID already completed - skipping move/metadata"
+          fi
 
-          # Check for and unblock dependent tasks
-          echo "Checking for dependent tasks..."
-          UNBLOCKED=0
+          # Make unblock script executable and run it
+          chmod +x .agents/scripts/unblock-tasks.sh
+          echo ""
+          echo "Running dependency check to unblock tasks..."
+          UNBLOCK_OUTPUT=$(.agents/scripts/unblock-tasks.sh "$PROJECT")
+          echo "$UNBLOCK_OUTPUT"
 
-          for task_file in .agents/projects/$PROJECT/tasks/TASK-*.toon; do
-            [ -f "$task_file" ] || continue
-
-            # Check if this task requires the completed task
-            if grep -q "$TASK_ID" "$task_file"; then
-              # Check if all dependencies are met
-              BLOCKED=0
-              while IFS= read -r dep_task; do
-                if [ ! -f ".agents/completed/$PROJECT/$dep_task.toon" ]; then
-                  BLOCKED=1
-                  break
-                fi
-              done < <(grep -A 10 "required\[" "$task_file" | grep -oE 'TASK-[0-9]{3}' || true)
-
-              if [ $BLOCKED -eq 0 ]; then
-                # Update status to ready
-                sed -i 's/status: blocked/status: ready/' "$task_file"
-                UNBLOCKED_TASK=$(basename "$task_file" .toon)
-                echo "  → Unblocked: $UNBLOCKED_TASK"
-                UNBLOCKED=$((UNBLOCKED + 1))
-              fi
-            fi
-          done
-
+          # Extract unblocked count from script output
+          UNBLOCKED=$(echo "$UNBLOCK_OUTPUT" | grep "Tasks unblocked:" | awk '{print $3}')
           echo "unblocked_count=$UNBLOCKED" >> $GITHUB_OUTPUT
 
       - name: Commit and push changes

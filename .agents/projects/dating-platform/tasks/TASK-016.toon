@@ -4,7 +4,7 @@ task:
  title: Implement GDPR compliance features
  type: backend
  priority: 9
- status: blocked
+ status: ready
 
 description:
  summary: Build complete GDPR compliance system for EU users
