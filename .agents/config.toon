@@ -1,0 +1,33 @@
+orchestrator:
+ max_concurrent_agents: 4
+ poll_interval_minutes: 10
+ task_timeout_minutes: 30
+ enable_auto_release: true
+
+agents.default:
+ model: claude-sonnet-4
+ provider: anthropic
+ max_retries: 3
+
+agents.types[4]{name,capabilities,prompt_template}:
+ coder,"python,fastapi,postgresql,testing",prompts/coder.md
+ reviewer,"code-review,quality-assurance",prompts/reviewer.md
+ tester,"testing,quality-assurance",prompts/tester.md
+ architect,"architecture,planning,design",prompts/architect.md
+
+quality:
+ required_test_coverage: 80
+ run_linters: true
+ run_type_check: true
+ run_security_scan: true
+
+git:
+ main_branch: main
+ feature_branch_prefix: feature/TASK-
+ fix_branch_prefix: fix/TASK-
+ require_pr_reviews: true
+
+notifications:
+ enable_status_updates: true
+ notify_on_completion: true
+ notify_on_failure: true

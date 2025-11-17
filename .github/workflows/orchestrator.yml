@@ -1,0 +1,52 @@
+name: Task Orchestrator
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Every 10 minutes
+  push:
+    paths:
+      - '.agents/tasks/TASK-*.toon'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  orchestrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Release stalled tasks
+        run: |
+          chmod +x .agents/scripts/release-stalled.sh
+          ./.agents/scripts/release-stalled.sh 30
+
+      - name: Count available tasks
+        id: count
+        run: |
+          count=$(ls .agents/tasks/TASK-*.toon 2>/dev/null | wc -l)
+          echo "task_count=$count" >> $GITHUB_OUTPUT
+          echo "Found $count available tasks"
+
+      - name: Trigger agent executors
+        if: steps.count.outputs.task_count > 0
+        run: |
+          MAX_CONCURRENT=4
+          for i in $(seq 1 $MAX_CONCURRENT); do
+            if [ $(ls .agents/tasks/TASK-*.toon 2>/dev/null | wc -l) -gt 0 ]; then
+              echo "Triggering agent executor $i..."
+              gh workflow run agent-executor.yml
+              sleep 2  # Stagger launches
+            fi
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Report status
+        run: |
+          echo "=== Multi-Agent System Status ==="
+          echo "Pending: $(ls .agents/tasks/*.toon 2>/dev/null | wc -l)"
+          echo "Active: $(ls .agents/claimed/*.toon 2>/dev/null | wc -l)"
+          echo "Completed: $(ls .agents/completed/*.toon 2>/dev/null | wc -l)"
