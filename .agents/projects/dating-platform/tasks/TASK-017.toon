@@ -1,0 +1,86 @@
+task:
+ id: TASK-017
+ project: dating-platform
+ title: Implement EU AI Act compliance system
+ type: backend
+ priority: 9
+ status: blocked
+
+description:
+ summary: Build compliance infrastructure for EU AI Act Article 52 requirements
+ details: |
+  Create EU AI Act compliance:
+  - AI system transparency disclosures
+  - Clear labeling of AI-generated content (🤖 badge)
+  - Public AI transparency page
+  - Audit trail for all AI interactions
+  - Quarterly compliance reports
+  - Risk assessment documentation
+  - Technical documentation for regulators
+  - Conformity assessment procedures
+  - CE marking preparation (when applicable)
+  - Incident reporting system
+
+acceptance_criteria[10]:
+ All AI profiles labeled with 🤖 badge
+ GET /api/ai/transparency returns public disclosure
+ All AI interactions logged with metadata
+ Quarterly reports auto-generated as PDF
+ Risk assessment document maintained
+ Technical documentation updated with each AI change
+ Incident reporting workflow for AI failures
+ Audit logs retained for 5 years
+ Conformity assessment checklist completed
+ Transparency page meets Article 52 requirements
+
+dependencies:
+ required[2]:
+  TASK-009
+  TASK-010
+ blocks[0]:
+
+context:
+ files_to_create[10]:
+  backend/services/compliance/eu_ai_act.py
+  backend/services/compliance/ai_audit.py
+  backend/services/compliance/quarterly_report.py
+  backend/services/compliance/risk_assessment.py
+  backend/services/compliance/incident_reporting.py
+  backend/services/compliance/tests/test_ai_act.py
+  backend/legal/ai_transparency.md
+  backend/legal/ai_risk_assessment.md
+  backend/legal/ai_technical_documentation.md
+  backend/workers/quarterly_compliance_report.py
+
+technical_details:
+ stack[4]:
+  FastAPI 0.104+
+  SQLAlchemy 2.0
+  ReportLab (PDF generation)
+  Celery for scheduled reports
+ endpoints[5]:
+  GET /api/compliance/ai-transparency
+  GET /api/compliance/quarterly-report/{year}/{quarter}
+  POST /api/compliance/incident-report
+  GET /api/compliance/audit-logs
+  GET /api/compliance/risk-assessment (admin)
+ ai_act_requirements[5]:
+  Article 52: Transparency obligations
+  Annex III: High-risk AI system classification
+  Article 9: Risk management system
+  Article 11: Technical documentation
+  Article 62: Incident reporting
+
+compliance_artifacts[6]:
+ AI transparency disclosure page
+ Quarterly compliance reports (PDF)
+ Risk assessment documentation
+ Technical system documentation
+ Audit trail (5-year retention)
+ Incident response procedures
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:20:00Z
+ estimated_hours: 14
+ complexity: high

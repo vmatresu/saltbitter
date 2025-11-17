@@ -1,0 +1,78 @@
+task:
+ id: TASK-002
+ project: dating-platform
+ title: Implement user authentication system with JWT
+ type: backend
+ priority: 10
+ status: blocked
+
+description:
+ summary: Build complete authentication system with registration, login, and JWT tokens
+ details: |
+  Create auth service handling:
+  - User registration with email verification
+  - Login with JWT access tokens (15-min) + refresh tokens (7-day)
+  - Password hashing with bcrypt
+  - Token refresh endpoint
+  - Logout (token invalidation via Redis blacklist)
+  - Password reset flow
+  - Rate limiting (100 req/min per IP)
+
+acceptance_criteria[10]:
+ POST /api/auth/register creates user with hashed password
+ Email verification sends link and activates account
+ POST /api/auth/login returns JWT access + refresh tokens
+ POST /api/auth/refresh validates refresh token and issues new access token
+ POST /api/auth/logout blacklists tokens in Redis
+ Password reset sends email with secure token
+ All passwords hashed with bcrypt (cost factor 12)
+ Rate limiting prevents brute force attacks
+ Unit tests with 85%+ coverage
+ Integration tests for full auth flows
+
+dependencies:
+ required[1]:
+  TASK-001
+ blocks[3]:
+  TASK-003
+  TASK-004
+  TASK-005
+
+context:
+ files_to_create[8]:
+  backend/services/auth/main.py
+  backend/services/auth/models.py
+  backend/services/auth/schemas.py
+  backend/services/auth/routes.py
+  backend/services/auth/security.py
+  backend/services/auth/tests/test_auth.py
+  backend/services/auth/requirements.txt
+  backend/services/auth/Dockerfile
+
+technical_details:
+ stack[4]:
+  FastAPI 0.104+
+  SQLAlchemy 2.0
+  python-jose[cryptography] (JWT)
+  bcrypt + passlib
+ endpoints[5]:
+  POST /api/auth/register
+  POST /api/auth/login
+  POST /api/auth/refresh
+  POST /api/auth/logout
+  POST /api/auth/reset-password
+ database_tables[2]:
+  users (id, email, password_hash, verified, created_at)
+  refresh_tokens (id, user_id, token_hash, expires_at)
+
+security_requirements:
+ password_policy: Min 8 chars, 1 upper, 1 lower, 1 digit
+ token_storage: Refresh tokens in httpOnly secure cookies
+ rate_limiting: 100 requests/min per IP, 5 login attempts per user
+ email_verification: Required before account activation
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T16:50:00Z
+ estimated_hours: 12
+ complexity: high

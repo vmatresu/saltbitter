@@ -1,0 +1,86 @@
+task:
+ id: TASK-018
+ project: dating-platform
+ title: Build California SB 243 compliance system
+ type: backend
+ priority: 8
+ status: blocked
+
+description:
+ summary: Implement California SB 243 requirements for AI disclosure and opt-out
+ details: |
+  Create SB 243 compliance:
+  - AI disclosure during onboarding
+  - Pre-signup opt-out mechanism
+  - Post-signup opt-out in settings
+  - Clear identification of AI vs human interactions
+  - Human alternatives for all AI features
+  - Opt-out state persistence
+  - Compliance documentation
+  - User consent tracking
+  - Annual compliance audit
+  - California user detection
+
+acceptance_criteria[10]:
+ AI disclosure shown during signup for California users
+ Users can opt-out before creating account
+ Opt-out available in account settings anytime
+ Opt-out disables all AI features (companions, coaching)
+ Human alternatives clearly presented
+ California users detected via IP geolocation
+ Opt-out state persisted across sessions
+ Consent tracked in compliance_logs
+ Annual compliance audit checklist completed
+ SB 243 compliance page publicly accessible
+
+dependencies:
+ required[2]:
+  TASK-009
+  TASK-010
+ blocks[0]:
+
+context:
+ files_to_create[8]:
+  backend/services/compliance/sb_243.py
+  backend/services/compliance/geolocation.py
+  backend/services/compliance/opt_out.py
+  backend/services/compliance/tests/test_sb_243.py
+  frontend/components/AIDisclosureSB243.tsx
+  frontend/components/OptOutSettings.tsx
+  backend/legal/sb_243_disclosure.md
+  backend/legal/sb_243_compliance.md
+
+technical_details:
+ stack[4]:
+  FastAPI 0.104+
+  SQLAlchemy 2.0
+  React 18 + TypeScript
+  MaxMind GeoIP2 (geolocation)
+ endpoints[5]:
+  GET /api/compliance/sb-243-disclosure
+  POST /api/compliance/sb-243-opt-out
+  GET /api/compliance/sb-243-status
+  GET /api/geolocation/detect-california
+  GET /api/compliance/human-alternatives
+ sb_243_requirements[3]:
+  Section 1: Disclosure before AI interaction
+  Section 2: Opt-out mechanism before signup
+  Section 3: Human alternatives available
+
+california_detection:
+ method: IP geolocation via MaxMind GeoIP2
+ fallback: User self-declaration in settings
+ regions[2]:
+  California
+  Other US states (not required, but offered)
+
+human_alternatives[3]:
+ AI practice companions → Real user practice matches
+ AI coaching → Human coach consultations (scheduled)
+ AI icebreakers → Manual conversation starters
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:22:00Z
+ estimated_hours: 10
+ complexity: medium

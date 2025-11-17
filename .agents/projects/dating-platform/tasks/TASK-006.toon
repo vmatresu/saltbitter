@@ -1,0 +1,80 @@
+task:
+ id: TASK-006
+ project: dating-platform
+ title: Build compatibility matching algorithm v1.0
+ type: backend
+ priority: 8
+ status: blocked
+
+description:
+ summary: Create multi-factor matching algorithm with attachment theory weighting
+ details: |
+  Implement matching algorithm considering:
+  - Attachment style compatibility (40% weight)
+  - Location proximity via PostGIS (20% weight)
+  - Shared interests and values via embeddings (20% weight)
+  - Age preference matching (10% weight)
+  - Other preference filters (10% weight)
+  - Calculate compatibility score 0-100
+  - Filter by user preferences (gender, age range, distance)
+  - Rank matches by score
+
+acceptance_criteria[10]:
+ Attachment compatibility calculated using research-backed pairings
+ Location distance calculated using PostGIS geography functions
+ Interest similarity uses sentence-transformers embeddings
+ Age preference matching considers both users' preferences
+ Compatibility score normalized to 0-100 range
+ Preference filters applied before scoring
+ Matches ranked by compatibility score descending
+ Algorithm completes for 10k users in < 60 seconds
+ Unit tests validate scoring logic
+ Integration tests with sample user data
+
+dependencies:
+ required[4]:
+  TASK-001
+  TASK-003
+  TASK-004
+  TASK-005
+ blocks[1]:
+  TASK-007
+
+context:
+ files_to_create[6]:
+  backend/services/matching/main.py
+  backend/services/matching/algorithm.py
+  backend/services/matching/embeddings.py
+  backend/services/matching/compatibility.py
+  backend/services/matching/tests/test_matching.py
+  backend/services/matching/tests/fixtures.py
+
+technical_details:
+ stack[4]:
+  FastAPI 0.104+
+  SQLAlchemy 2.0 with PostGIS
+  sentence-transformers (all-MiniLM-L6-v2)
+  numpy for vector calculations
+ compatibility_weights[5]:
+  attachment_style: 40%
+  location_proximity: 20%
+  interest_similarity: 20%
+  age_preference: 10%
+  other_preferences: 10%
+ attachment_compatibility_matrix[4]:
+  Secure-Secure: 100
+  Secure-Anxious: 85
+  Secure-Avoidant: 80
+  Anxious-Avoidant: 40
+
+performance_targets:
+ match_generation_10k_users_seconds: 60
+ embedding_calculation_ms: 50
+ postgis_distance_query_ms: 20
+ cache_hit_rate_percent: 80
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T16:58:00Z
+ estimated_hours: 14
+ complexity: high

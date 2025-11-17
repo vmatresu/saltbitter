@@ -1,0 +1,79 @@
+task:
+ id: TASK-007
+ project: dating-platform
+ title: Implement daily match generation service
+ type: backend
+ priority: 8
+ status: blocked
+
+description:
+ summary: Build Celery task for generating and delivering daily matches
+ details: |
+  Create match generation system:
+  - Celery beat scheduled task (daily at 6 AM user local time)
+  - Fetch unmatched users needing matches
+  - Calculate compatibility scores using TASK-006 algorithm
+  - Filter already seen/passed matches
+  - Deliver top 5-10 matches per user (free tier gets 5-10, premium unlimited)
+  - Store match records with compatibility scores
+  - Cache match results in Redis
+  - Handle mutual matches (both users matched each other)
+  - Send push notifications for new matches
+
+acceptance_criteria[10]:
+ Celery beat task runs daily at 6 AM user timezone
+ Fetches users who need new matches
+ Uses compatibility algorithm from TASK-006
+ Excludes previously seen or passed matches
+ Free users get 5-10 matches, premium unlimited
+ Match records saved to database
+ Compatibility scores stored with matches
+ Mutual matches detected and flagged
+ Redis cache for match results (24h TTL)
+ Integration tests with mock users
+
+dependencies:
+ required[4]:
+  TASK-001
+  TASK-004
+  TASK-005
+  TASK-006
+ blocks[1]:
+  TASK-008
+
+context:
+ files_to_create[7]:
+  backend/services/matching/tasks.py
+  backend/services/matching/celery_app.py
+  backend/services/matching/match_delivery.py
+  backend/services/matching/cache.py
+  backend/services/matching/notifications.py
+  backend/services/matching/tests/test_tasks.py
+  backend/services/matching/celerybeat-schedule.py
+
+technical_details:
+ stack[4]:
+  Celery 5.3+
+  Redis 7 (broker + result backend)
+  SQLAlchemy 2.0
+  APNs/FCM for push notifications
+ endpoints[4]:
+  GET /api/matches (get today's matches)
+  POST /api/matches/{id}/like
+  POST /api/matches/{id}/pass
+  GET /api/matches/mutual
+ celery_tasks[2]:
+  generate_daily_matches (scheduled 6 AM user timezone)
+  detect_mutual_matches (after each like action)
+
+caching_strategy:
+ match_results_ttl_hours: 24
+ compatibility_scores_ttl_hours: 168
+ user_preferences_ttl_hours: 6
+ cache_invalidation: On profile update or preference change
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:00:00Z
+ estimated_hours: 12
+ complexity: high

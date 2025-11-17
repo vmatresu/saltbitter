@@ -1,0 +1,76 @@
+task:
+ id: TASK-003
+ project: dating-platform
+ title: Build user profile service with photo uploads
+ type: backend
+ priority: 9
+ status: blocked
+
+description:
+ summary: Implement profile management with S3 photo storage
+ details: |
+  Create profile service for:
+  - Profile CRUD operations (create, read, update)
+  - Photo upload to S3 with CloudFront CDN
+  - Photo validation (max 6 photos, face detection via Rekognition)
+  - Location data with PostGIS geography type
+  - Profile completeness scoring
+  - Privacy settings
+  - Profile photo ordering
+
+acceptance_criteria[10]:
+ GET /api/profiles/{id} returns complete user profile
+ PUT /api/profiles/{id} updates profile fields
+ POST /api/profiles/{id}/photos uploads to S3 and saves URL
+ Photo validation ensures max 6 photos per user
+ AWS Rekognition detects faces in uploaded photos
+ DELETE /api/profiles/{id}/photos/{photo_id} removes from S3
+ Location stored as PostGIS geography point
+ Profile completeness score calculated (0-100%)
+ Unit tests with 85%+ coverage
+ Integration tests with mocked S3
+
+dependencies:
+ required[2]:
+  TASK-001
+  TASK-002
+ blocks[2]:
+  TASK-006
+  TASK-007
+
+context:
+ files_to_create[7]:
+  backend/services/profile/main.py
+  backend/services/profile/models.py
+  backend/services/profile/schemas.py
+  backend/services/profile/routes.py
+  backend/services/profile/storage.py
+  backend/services/profile/tests/test_profile.py
+  backend/services/profile/Dockerfile
+
+technical_details:
+ stack[5]:
+  FastAPI 0.104+
+  SQLAlchemy 2.0 with PostGIS
+  boto3 (AWS S3 SDK)
+  AWS Rekognition
+  Pillow (image processing)
+ endpoints[4]:
+  GET /api/profiles/{id}
+  PUT /api/profiles/{id}
+  POST /api/profiles/{id}/photos
+  DELETE /api/profiles/{id}/photos/{photo_id}
+ database_tables[1]:
+  profiles (user_id, name, bio, age, gender, photos JSON, location GEOGRAPHY, completeness_score)
+
+storage_requirements:
+ s3_bucket: dating-platform-photos-{env}
+ cloudfront_distribution: CDN for photo delivery
+ image_validation: Max 10MB, formats jpg/png, min 800x800px
+ face_detection: AWS Rekognition confidence >= 80%
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T16:52:00Z
+ estimated_hours: 10
+ complexity: medium
