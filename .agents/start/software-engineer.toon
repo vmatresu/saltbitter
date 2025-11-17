@@ -118,6 +118,10 @@ step_6_test_your_implementation:
 
 step_7_create_pull_request:
  target_branch: develop (PRs go to develop, not main)
+ pr_title_format: "TASK-XXX: {descriptive title}"
+ important[2]:
+  MUST include TASK-XXX in PR title for automatic task completion
+  PR must target develop branch, not main
  commit_message_template: |
   Implement {TASK-ID}: {task title}
 
@@ -137,8 +141,8 @@ step_7_create_pull_request:
 
   Co-Authored-By: Claude <noreply@anthropic.com>
  push_branch: git push -u origin feature/{task-id}
- create_pr: gh pr create --base develop --title "{TASK-ID}: {title}" --body "{detailed description}"
- important: PR must target develop branch, not main
+ create_pr: gh pr create --base develop --title "TASK-{id}: {title}" --body "{detailed description}"
+ automation: When PR is merged, GitHub Actions will auto-complete the task!
  pr_body_template: |
   ## Summary
   {What was implemented}
@@ -163,18 +167,17 @@ step_7_create_pull_request:
 
 step_8_mark_task_complete:
  when: After PR is merged to develop
+ automation: GitHub Actions auto-completes tasks on PR merge
  branch: develop (task completion recorded on develop)
- option_a_helper_script:
+ how_it_works[3]:
+  When PR is merged with TASK-XXX in title/branch/body
+  GitHub Action automatically moves task to completed/
+  Dependent tasks are auto-unblocked
+ manual_option_if_needed:
   command: ./agents/scripts/complete-task.sh {task-id} {agent-id} {pr-url} {project}
+  when: Use this if automation failed or for manual completion
   atomic: Yes, handles race conditions and auto-unblocks dependent tasks
- option_b_manual_git:
-  checkout: git checkout develop
-  pull: git pull origin develop
-  move: mv .agents/claimed/{project}/{task-id}.toon .agents/completed/{project}/{task-id}.toon
-  metadata: Append completion metadata (timestamp, PR URL, agent ID)
-  add: git add .agents/claimed/ .agents/completed/
-  commit: git commit -m "[AGENT-COMPLETE] Finished {task-id}"
-  push: git push origin develop
+ important: Include TASK-XXX in your PR title for automatic completion!
  completion_metadata_format: |
 
   completion:
