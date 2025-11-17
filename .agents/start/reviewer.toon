@@ -159,14 +159,16 @@ step_8_provide_feedback:
   github_action: gh pr review {pr-number} --request-changes --body "{comment}"
 
 step_9_verify_merge_safety:
+ target_branch: develop (PRs merge to develop, not main)
  before_approval:
-  branch_up_to_date: Verify rebased on latest main
+  branch_up_to_date: Verify rebased on latest develop
   ci_passing: All GitHub Actions checks green
-  no_conflicts: No merge conflicts
+  no_conflicts: No merge conflicts with develop
   dependencies_met: All required tasks completed
  merge_strategy:
   squash: For feature branches
   preserve: For architecture/major changes
+ note: main branch updated via periodic releases from develop
 
 step_10_post_merge_verification:
  after_pr_merged:
