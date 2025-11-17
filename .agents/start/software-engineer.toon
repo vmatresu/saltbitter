@@ -31,17 +31,20 @@ step_2_find_available_work:
 
 step_3_claim_a_task:
  method: Atomic Git operation (first to push wins)
+ branch: develop (agent coordination branch)
  option_a_helper_script:
   command: ./agents/scripts/claim-task.sh agent-{your-id}
-  atomic: Yes, handles race conditions
+  atomic: Yes, handles race conditions automatically
+  branch: Claims on develop branch by default
  option_b_manual_git:
-  pull: git pull origin main
+  checkout: git checkout develop
+  pull: git pull origin develop
   select: Choose TASK-*.toon file from projects/{project}/tasks/
   verify: Check dependencies are completed
   move: mv to .agents/claimed/{project}/TASK-{id}.toon
   metadata: Append claim timestamp and agent ID
   commit: git commit -m "[AGENT-CLAIM] {agent-id} claimed {task-id}"
-  push: git push origin main (first to push wins!)
+  push: git push origin develop (first to push wins!)
   conflict: If push fails, task already claimed, try another
 
 step_4_read_your_task:
@@ -62,6 +65,7 @@ step_4b_send_heartbeats:
  note: Heartbeat updates last_heartbeat timestamp in claimed task file
 
 step_5_implement_the_task:
+ base_branch: develop (always branch from develop, not main)
  branch: git checkout -b feature/{task-id}-{description}
  remember_heartbeats: Run heartbeat script every 10-15 minutes while working
  standards_by_project:
@@ -111,6 +115,7 @@ step_6_test_your_implementation:
   Mock external services (Stripe, OpenAI, AWS)
 
 step_7_create_pull_request:
+ target_branch: develop (PRs go to develop, not main)
  commit_message_template: |
   Implement {TASK-ID}: {task title}
 
@@ -130,7 +135,8 @@ step_7_create_pull_request:
 
   Co-Authored-By: Claude <noreply@anthropic.com>
  push_branch: git push -u origin feature/{task-id}
- create_pr: gh pr create --title "{TASK-ID}: {title}" --body "{detailed description}"
+ create_pr: gh pr create --base develop --title "{TASK-ID}: {title}" --body "{detailed description}"
+ important: PR must target develop branch, not main
  pr_body_template: |
   ## Summary
   {What was implemented}
@@ -154,14 +160,19 @@ step_7_create_pull_request:
   🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
 step_8_mark_task_complete:
- when: After PR is merged to main
- procedure[6]:
-  git checkout main && git pull origin main
-  mv .agents/claimed/{project}/{task-id}.toon .agents/completed/{project}/{task-id}.toon
-  Append completion metadata (timestamp, PR URL, agent ID)
-  git add .agents/claimed/ .agents/completed/
-  git commit -m "[AGENT-COMPLETE] Finished {task-id}"
-  git push origin main
+ when: After PR is merged to develop
+ branch: develop (task completion recorded on develop)
+ option_a_helper_script:
+  command: ./agents/scripts/complete-task.sh {task-id} {agent-id} {pr-url} {project}
+  atomic: Yes, handles race conditions and auto-unblocks dependent tasks
+ option_b_manual_git:
+  checkout: git checkout develop
+  pull: git pull origin develop
+  move: mv .agents/claimed/{project}/{task-id}.toon .agents/completed/{project}/{task-id}.toon
+  metadata: Append completion metadata (timestamp, PR URL, agent ID)
+  add: git add .agents/claimed/ .agents/completed/
+  commit: git commit -m "[AGENT-COMPLETE] Finished {task-id}"
+  push: git push origin develop
  completion_metadata_format: |
 
   completion:

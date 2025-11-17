@@ -98,8 +98,9 @@ step_8_hand_off_to_architect:
  verify_in_spec:
   metadata.next_step: architect-agent-task-breakdown
   project.status: ready_for_architecture
- merge_pr: After approval, merge to main
- notify: Architect agent can now find project and create architecture
+ branching: Work on develop branch, merge to main later for releases
+ merge_pr: After approval, merge to develop (main updated via periodic releases)
+ notify: Architect agent can now find project and create architecture on develop
 
 coordination_rules:
  atomic_operations: Project creation via Git commit
