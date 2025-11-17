@@ -4,7 +4,7 @@ task:
  title: Build user profile service with photo uploads
  type: backend
  priority: 9
- status: blocked
+ status: ready
 
 description:
  summary: Implement profile management with S3 photo storage
