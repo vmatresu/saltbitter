@@ -45,3 +45,7 @@ botocore==1.32.7
 
 # Image Processing
 Pillow==10.1.0
+
+# Machine Learning (for matching algorithm)
+sentence-transformers==2.2.2
+torch==2.1.1
