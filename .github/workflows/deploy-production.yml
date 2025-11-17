@@ -1,0 +1,263 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., v1.2.3)'
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY_BACKEND: saltbitter-backend
+  ECR_REPOSITORY_FRONTEND: saltbitter-frontend
+  ECS_CLUSTER: saltbitter-production
+  ECS_SERVICE_BACKEND: backend-service
+  ECS_SERVICE_FRONTEND: frontend-service
+  ENVIRONMENT: production
+
+jobs:
+  approval:
+    name: Manual Approval Required
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://saltbitter.com
+
+    steps:
+      - name: Manual approval checkpoint
+        run: |
+          echo "⏸️  Waiting for manual approval to deploy to production..."
+          echo "Deployment will proceed after approval is granted."
+
+  build-and-deploy:
+    name: Build and Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [approval]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set version tag
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "tag=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=v$(date +%Y%m%d)-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build backend Docker image
+        id: build-backend
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          docker build -f backend/Dockerfile.dev -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG backend/
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:production
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:production
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build frontend Docker image
+        id: build-frontend
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          docker build -f frontend/Dockerfile.dev -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG frontend/
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:production
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:production
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Create pre-deployment snapshot
+        run: |
+          mkdir -p .rollback-snapshots
+          SNAPSHOT_FILE=".rollback-snapshots/pre-deploy-$(date +%Y%m%d-%H%M%S).json"
+
+          CURRENT_BACKEND=$(aws ecs describe-services \
+            --cluster $ECS_CLUSTER \
+            --services $ECS_SERVICE_BACKEND \
+            --region $AWS_REGION \
+            --query 'services[0].taskDefinition' \
+            --output text)
+
+          CURRENT_FRONTEND=$(aws ecs describe-services \
+            --cluster $ECS_CLUSTER \
+            --services $ECS_SERVICE_FRONTEND \
+            --region $AWS_REGION \
+            --query 'services[0].taskDefinition' \
+            --output text)
+
+          cat > $SNAPSHOT_FILE <<EOF
+          {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "environment": "production",
+            "before_deployment": {
+              "backend_task": "$CURRENT_BACKEND",
+              "frontend_task": "$CURRENT_FRONTEND"
+            },
+            "deploying_version": "${{ steps.version.outputs.tag }}"
+          }
+          EOF
+
+          echo "Pre-deployment snapshot saved to $SNAPSHOT_FILE"
+
+      - name: Update backend task definition
+        id: backend-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: .aws/task-definition-backend-production.json
+          container-name: backend
+          image: ${{ steps.build-backend.outputs.image }}
+
+      - name: Deploy backend to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.backend-task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_BACKEND }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Update frontend task definition
+        id: frontend-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: .aws/task-definition-frontend-production.json
+          container-name: frontend
+          image: ${{ steps.build-frontend.outputs.image }}
+
+      - name: Deploy frontend to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.frontend-task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_FRONTEND }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Run comprehensive smoke tests
+        run: |
+          echo "Running comprehensive smoke tests against production..."
+
+          # Wait for services to be fully up
+          sleep 60
+
+          # Test backend health
+          BACKEND_URL="https://api.saltbitter.com/health"
+          BACKEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $BACKEND_URL)
+
+          if [ "$BACKEND_STATUS" = "200" ]; then
+            echo "✅ Backend health check passed"
+          else
+            echo "❌ Backend health check failed (HTTP $BACKEND_STATUS)"
+            echo "🔄 Initiating automatic rollback..."
+            ./scripts/rollback.sh production ${{ steps.version.outputs.tag }}
+            exit 1
+          fi
+
+          # Test frontend
+          FRONTEND_URL="https://saltbitter.com"
+          FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $FRONTEND_URL)
+
+          if [ "$FRONTEND_STATUS" = "200" ]; then
+            echo "✅ Frontend health check passed"
+          else
+            echo "❌ Frontend health check failed (HTTP $FRONTEND_STATUS)"
+            echo "🔄 Initiating automatic rollback..."
+            ./scripts/rollback.sh production ${{ steps.version.outputs.tag }}
+            exit 1
+          fi
+
+          # Test critical API endpoints
+          echo "Testing critical API endpoints..."
+
+          AUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.saltbitter.com/api/auth/login)
+          if [ "$AUTH_STATUS" != "405" ] && [ "$AUTH_STATUS" != "401" ]; then
+            echo "❌ Auth endpoint unreachable"
+            ./scripts/rollback.sh production ${{ steps.version.outputs.tag }}
+            exit 1
+          fi
+
+          echo "✅ All smoke tests passed"
+
+      - name: Create Git tag
+        if: success()
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag -a ${{ steps.version.outputs.tag }} -m "Production release ${{ steps.version.outputs.tag }}"
+          git push origin ${{ steps.version.outputs.tag }}
+
+      - name: Create GitHub Release
+        if: success()
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          release_name: Release ${{ steps.version.outputs.tag }}
+          body: |
+            ## Production Deployment
+
+            **Version:** ${{ steps.version.outputs.tag }}
+            **Commit:** ${{ github.sha }}
+            **Deployed by:** ${{ github.actor }}
+            **Timestamp:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+            ### Images
+            - Backend: ${{ steps.build-backend.outputs.image }}
+            - Frontend: ${{ steps.build-frontend.outputs.image }}
+
+            ### Rollback Command
+            ```bash
+            ./scripts/rollback.sh production <previous-version>
+            ```
+          draft: false
+          prerelease: false
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "🎉 Successfully deployed ${{ steps.version.outputs.tag }} to production!"
+          echo "Backend: ${{ steps.build-backend.outputs.image }}"
+          echo "Frontend: ${{ steps.build-frontend.outputs.image }}"
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "❌ Production deployment failed!"
+          echo "Manual intervention required."
+          echo "Rollback command: ./scripts/rollback.sh production <previous-version>"
+
+      - name: Create deployment record
+        if: success()
+        run: |
+          mkdir -p .deployments
+          cat > .deployments/production-$(date +%Y%m%d-%H%M%S).json <<EOF
+          {
+            "environment": "production",
+            "version": "${{ steps.version.outputs.tag }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "${{ github.sha }}",
+            "backend_image": "${{ steps.build-backend.outputs.image }}",
+            "frontend_image": "${{ steps.build-frontend.outputs.image }}",
+            "deployed_by": "${{ github.actor }}",
+            "smoke_tests_passed": true
+          }
+          EOF
