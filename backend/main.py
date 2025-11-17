@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from services.auth import auth_router
 from services.auth.rate_limiter import rate_limit_middleware
+from services.profile import profile_router
 
 # Create FastAPI application
 app = FastAPI(
@@ -34,6 +35,7 @@ app.middleware("http")(rate_limit_middleware)
 
 # Include routers
 app.include_router(auth_router)
+app.include_router(profile_router)
 
 
 @app.get("/")
