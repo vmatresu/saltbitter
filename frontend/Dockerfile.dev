@@ -1,0 +1,43 @@
+FROM node:20-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies for building
+RUN apk add --no-cache git
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install dependencies
+# If package.json doesn't exist yet, we'll install the basics
+RUN if [ -f package.json ]; then npm ci; else \
+    npm init -y && \
+    npm install --save-dev \
+        vite@5.0.0 \
+        @vitejs/plugin-react@4.2.0 \
+        typescript@5.3.2 \
+        @types/react@18.2.43 \
+        @types/react-dom@18.2.17 \
+        eslint@8.55.0 \
+        @typescript-eslint/parser@6.14.0 \
+        @typescript-eslint/eslint-plugin@6.14.0 \
+        prettier@3.1.0 && \
+    npm install \
+        react@18.2.0 \
+        react-dom@18.2.0 \
+        react-router-dom@6.20.1; \
+    fi
+
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+
+# Default command (can be overridden in docker-compose.yml)
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
