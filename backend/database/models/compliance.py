@@ -80,7 +80,7 @@ class ComplianceLog(Base):
     action_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
 
     # Action metadata stored as JSONB for flexibility
-    metadata: Mapped[dict] = mapped_column(
+    action_metadata: Mapped[dict] = mapped_column(
         JSONB, nullable=False, default=dict, server_default=func.jsonb_build_object()
     )
 
