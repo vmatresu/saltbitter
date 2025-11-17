@@ -1,34 +1,37 @@
 task:
  id: TASK-001
  project: dating-platform
- title: Setup AWS infrastructure with Terraform
+ title: Setup local Docker development environment
  type: infrastructure
  priority: 10
  status: ready
 
 description:
- summary: Initialize AWS infrastructure using Terraform IaC
+ summary: Create Docker Compose development environment for local testing
  details: |
-  Set up complete AWS infrastructure for development, staging, and production:
-  - ECS Fargate cluster for containerized apps
-  - RDS PostgreSQL 15 Multi-AZ instances
-  - ElastiCache Redis clusters
-  - S3 buckets for photo storage
-  - CloudFront CDN configuration
-  - VPC with public/private subnets
-  - Security groups and IAM roles
-  - Secrets Manager for credentials
-  - CloudWatch logging and monitoring
+  Set up complete local development environment using Docker Compose:
+  - PostgreSQL 15 database container
+  - Redis 7 cache container
+  - FastAPI backend service with hot reload
+  - React frontend with Vite dev server
+  - MinIO (S3-compatible) for local file storage
+  - Mailhog for email testing
+  - Development scripts (start, stop, logs, reset)
+  - Volume mounts for live code editing
+  - Environment configuration (.env files)
+  - Database seed data for testing
 
-acceptance_criteria[8]:
- Terraform scripts create all AWS resources successfully
- Three environments deployed (dev, staging, prod)
- RDS PostgreSQL 15 Multi-AZ running
- ElastiCache Redis clusters operational
- S3 buckets with proper IAM policies
- CloudFront distribution serving S3 content
- GitHub Actions can deploy to all environments
- Infrastructure cost < $500/month for dev+staging
+acceptance_criteria[10]:
+ docker-compose.yml defines all services
+ PostgreSQL 15 container runs with persistent volume
+ Redis 7 container runs and accessible
+ Backend service runs on http://localhost:8000 with hot reload
+ Frontend runs on http://localhost:3000 with hot reload
+ MinIO runs on http://localhost:9000 for S3 testing
+ Mailhog runs on http://localhost:8025 for email testing
+ make dev-up starts all services
+ make dev-down stops and cleans up containers
+ Development documentation in docs/DEVELOPMENT.md
 
 dependencies:
  required[0]:
@@ -38,40 +41,73 @@ dependencies:
   TASK-004
 
 context:
- files_to_create[6]:
-  terraform/main.tf
-  terraform/variables.tf
-  terraform/environments/dev.tfvars
-  terraform/environments/staging.tfvars
-  terraform/environments/prod.tfvars
-  .github/workflows/terraform-deploy.yml
+ files_to_create[12]:
+  docker-compose.yml
+  docker-compose.override.yml (for local overrides)
+  backend/Dockerfile.dev
+  frontend/Dockerfile.dev
+  .env.example
+  .env.local (gitignored)
+  scripts/dev-up.sh
+  scripts/dev-down.sh
+  scripts/dev-reset.sh (reset database)
+  scripts/dev-logs.sh
+  Makefile (convenience commands)
+  docs/DEVELOPMENT.md
  related_docs[2]:
   .agents/projects/dating-platform/architecture.toon
   docs/dating-platform/README.md
 
 technical_details:
- aws_services[8]:
-  ECS Fargate (compute)
-  RDS PostgreSQL 15 Multi-AZ (database)
-  ElastiCache Redis 7 (cache)
-  S3 (storage)
-  CloudFront (CDN)
-  Secrets Manager (secrets)
-  CloudWatch (monitoring)
-  IAM (access control)
- terraform_modules[5]:
-  networking (VPC, subnets, security groups)
-  compute (ECS cluster, task definitions)
-  database (RDS, ElastiCache)
-  storage (S3, CloudFront)
-  monitoring (CloudWatch, DataDog integration)
- estimated_cost_monthly_usd:
-  dev: 150
-  staging: 200
-  prod: 800
+ docker_services[7]:
+  postgres (PostgreSQL 15, port 5432)
+  redis (Redis 7, port 6379)
+  backend (FastAPI + uvicorn with reload, port 8000)
+  frontend (Vite dev server, port 3000)
+  minio (S3-compatible storage, ports 9000/9001)
+  mailhog (Email testing, ports 1025/8025)
+  adminer (Database UI, port 8080)
+ environment_variables[8]:
+  DATABASE_URL=postgresql://postgres:postgres@postgres:5432/saltbitter_dev
+  REDIS_URL=redis://redis:6379/0
+  S3_ENDPOINT=http://minio:9000
+  S3_ACCESS_KEY=minioadmin
+  S3_SECRET_KEY=minioadmin
+  SMTP_HOST=mailhog
+  SMTP_PORT=1025
+  ENVIRONMENT=development
+ volumes[4]:
+  postgres_data (persistent database)
+  redis_data (persistent cache)
+  minio_data (persistent file storage)
+  ./backend:/app (code mount)
+  ./frontend:/app (code mount)
+ development_features:
+  hot_reload: Backend and frontend auto-reload on code changes
+  debugging: Ports exposed for debugger attachment
+  seeding: Initial data loaded automatically
+  reset: One command to reset entire environment
+
+makefile_commands[8]:
+ make dev-up: Start all services
+ make dev-down: Stop all services
+ make dev-restart: Restart all services
+ make dev-logs: Tail logs from all services
+ make dev-reset: Reset database and volumes
+ make dev-shell-backend: Open shell in backend container
+ make dev-shell-frontend: Open shell in frontend container
+ make dev-db: Open psql in database
+
+cost:
+ infrastructure: $0 (local development only)
+ compute: Uses local machine resources
+ storage: Local disk space only
+ note: AWS infrastructure comes later after MVP validation
 
 metadata:
  created_by: architect-agent
  created_at: 2025-11-17T16:45:00Z
- estimated_hours: 16
- complexity: high
+ updated_at: 2025-11-17T18:00:00Z
+ updated_reason: Changed from AWS to local Docker for cost-free development
+ estimated_hours: 8
+ complexity: medium

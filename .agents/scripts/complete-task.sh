@@ -1,56 +1,102 @@
 #!/bin/bash
 # Mark a task as completed and move to completed/
-# Usage: ./complete-task.sh <task-id> <agent-id> [pr-url] [branch-name]
+# Usage: ./complete-task.sh <task-id> <agent-id> [pr-url] [project-id]
 
 set -e
 
 TASK_ID="$1"
 AGENT_ID="$2"
 PR_URL="${3:-}"
-BRANCH="${4:-}"
+PROJECT="${4:-dating-platform}"
 
 if [ -z "$TASK_ID" ] || [ -z "$AGENT_ID" ]; then
-    echo "Usage: $0 <task-id> <agent-id> [pr-url] [branch-name]" >&2
+    echo "Usage: $0 <task-id> <agent-id> [pr-url] [project-id]" >&2
     exit 1
 fi
 
-CLAIMED_FILE=".agents/claimed/$TASK_ID.toon"
+CLAIMED_FILE=".agents/claimed/$PROJECT/$TASK_ID.toon"
 
 if [ ! -f "$CLAIMED_FILE" ]; then
-    echo "Error: Task $TASK_ID not found in claimed/" >&2
+    echo "Error: Task $TASK_ID not found in claimed/$PROJECT/" >&2
     exit 1
 fi
 
 # Verify this agent owns the task
-if ! grep -q "claimed_by: $AGENT_ID" "$CLAIMED_FILE"; then
-    echo "Error: Task $TASK_ID is not claimed by $AGENT_ID" >&2
+OWNER=$(grep "claimed_by:" "$CLAIMED_FILE" | awk '{print $2}')
+if [ "$OWNER" != "$AGENT_ID" ]; then
+    echo "Error: Task $TASK_ID is claimed by $OWNER, not $AGENT_ID" >&2
     exit 1
 fi
 
+# Create completed directory if needed
+mkdir -p ".agents/completed/$PROJECT"
+
 # Move to completed/
-mv "$CLAIMED_FILE" ".agents/completed/$TASK_ID.toon"
+mv "$CLAIMED_FILE" ".agents/completed/$PROJECT/$TASK_ID.toon"
 
 # Add completion metadata
-cat >> ".agents/completed/$TASK_ID.toon" <<EOF
+COMPLETED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+cat >> ".agents/completed/$PROJECT/$TASK_ID.toon" <<EOF
 
 completion:
  status: completed
- completed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+ completed_at: $COMPLETED_AT
  completed_by: $AGENT_ID
 EOF
 
 if [ -n "$PR_URL" ]; then
-    echo " pr_url: $PR_URL" >> ".agents/completed/$TASK_ID.toon"
-fi
-
-if [ -n "$BRANCH" ]; then
-    echo " branch: $BRANCH" >> ".agents/completed/$TASK_ID.toon"
+    echo " pr_url: $PR_URL" >> ".agents/completed/$PROJECT/$TASK_ID.toon"
 fi
 
 # Commit and push
 git pull --rebase origin main --quiet 2>/dev/null || true
-git add ".agents/completed/$TASK_ID.toon" ".agents/claimed/" 2>/dev/null || true
-git commit -m "[AGENT-COMPLETE] $AGENT_ID completed $TASK_ID" --quiet
-git push origin main --quiet
+git add ".agents/completed/$PROJECT/$TASK_ID.toon" ".agents/claimed/$PROJECT/" 2>/dev/null || true
+git commit -m "[AGENT-COMPLETE] $AGENT_ID completed $PROJECT/$TASK_ID" --quiet
 
-echo "✓ Task $TASK_ID marked as completed"
+if git push origin main --quiet 2>/dev/null; then
+    echo "✓ Task $PROJECT/$TASK_ID marked as completed at $COMPLETED_AT" >&2
+
+    # Check if this completion unblocks any tasks
+    echo "Checking for unblocked tasks..." >&2
+    UNBLOCKED=0
+    for task_file in .agents/projects/$PROJECT/tasks/TASK-*.toon; do
+        [ -f "$task_file" ] || continue
+
+        # Check if this task was blocking completion
+        if grep -q "required.*$TASK_ID" "$task_file" 2>/dev/null; then
+            # Check if all dependencies are now met
+            BLOCKED=0
+            while IFS= read -r dep_task; do
+                if [ ! -f ".agents/completed/$PROJECT/$dep_task.toon" ]; then
+                    BLOCKED=1
+                    break
+                fi
+            done < <(grep -A 10 "required\[" "$task_file" | grep "TASK-" | sed 's/^[[:space:]]*//' || true)
+
+            if [ $BLOCKED -eq 0 ]; then
+                # Update status to ready
+                UNBLOCKED_TASK=$(basename "$task_file" .toon)
+                if [[ "$OSTYPE" == "darwin"* ]]; then
+                    sed -i '' 's/status: blocked/status: ready/' "$task_file"
+                else
+                    sed -i 's/status: blocked/status: ready/' "$task_file"
+                fi
+                echo "  → Unblocked: $UNBLOCKED_TASK" >&2
+                UNBLOCKED=$((UNBLOCKED + 1))
+            fi
+        fi
+    done
+
+    if [ $UNBLOCKED -gt 0 ]; then
+        git add .agents/projects/$PROJECT/tasks/
+        git commit -m "[AUTO] Unblocked $UNBLOCKED tasks after completing $TASK_ID" --quiet
+        git push origin main --quiet 2>/dev/null || true
+        echo "✓ Unblocked $UNBLOCKED tasks" >&2
+    fi
+
+    exit 0
+else
+    echo "⚠ Warning: Could not push completion (conflict with other agent)" >&2
+    git reset --hard HEAD~1 --quiet
+    exit 1
+fi

@@ -1,55 +1,85 @@
 #!/bin/bash
 # Atomically claim a task using Git's first-commit-wins mechanism
-# Usage: ./claim-task.sh <agent-id>
+# Usage: ./claim-task.sh <agent-id> [project-id]
 
 set -e
 
 AGENT_ID="${1:-agent-$(date +%s)-$RANDOM}"
+PROJECT="${2:-dating-platform}"  # Default to dating-platform
 TASK_FILE=""
+TASK_PROJECT=""
 
-# Find first available task (highest priority)
-for file in .agents/tasks/TASK-*.toon; do
-    if [ -f "$file" ]; then
-        TASK_FILE="$file"
-        break
-    fi
+# Find first available task across all projects (or specific project)
+if [ -n "$PROJECT" ]; then
+    # Search specific project
+    PROJECTS="$PROJECT"
+else
+    # Search all projects
+    PROJECTS=$(ls -1 .agents/projects/ | grep -v README.md | grep '\.toon$' | sed 's/\.toon$//')
+fi
+
+# Find highest priority ready task
+for proj in $PROJECTS; do
+    for file in .agents/projects/$proj/tasks/TASK-*.toon; do
+        if [ -f "$file" ]; then
+            # Check if task is ready (not blocked)
+            STATUS=$(grep "status:" "$file" | awk '{print $2}')
+            if [ "$STATUS" = "ready" ]; then
+                PRIORITY=$(grep "priority:" "$file" | awk '{print $2}')
+                if [ -z "$TASK_FILE" ] || [ "$PRIORITY" -gt "$MAX_PRIORITY" ]; then
+                    TASK_FILE="$file"
+                    TASK_PROJECT="$proj"
+                    MAX_PRIORITY="$PRIORITY"
+                fi
+            fi
+        fi
+    done
 done
 
 if [ -z "$TASK_FILE" ]; then
-    echo "No tasks available" >&2
+    echo "No ready tasks available" >&2
     exit 1
 fi
 
 TASK_ID=$(basename "$TASK_FILE" .toon)
+
+echo "Attempting to claim $TASK_ID from $TASK_PROJECT project (priority: $MAX_PRIORITY)" >&2
 
 # Atomic claim via git commit
 git pull --rebase origin main 2>/dev/null || true
 
 # Check if task still exists after pull
 if [ ! -f "$TASK_FILE" ]; then
-    echo "Task was claimed by another agent" >&2
+    echo "Task was claimed by another agent during pull" >&2
     exit 2
 fi
 
-# Move file to claimed/
-mv "$TASK_FILE" ".agents/claimed/$TASK_ID.toon"
+# Create claimed directory if it doesn't exist
+mkdir -p ".agents/claimed/$TASK_PROJECT"
 
-# Add claim metadata
-cat >> ".agents/claimed/$TASK_ID.toon" <<EOF
+# Move file to claimed/
+mv "$TASK_FILE" ".agents/claimed/$TASK_PROJECT/$TASK_ID.toon"
+
+# Add claim metadata with heartbeat
+CLAIM_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+cat >> ".agents/claimed/$TASK_PROJECT/$TASK_ID.toon" <<EOF
 
 claim:
  claimed_by: $AGENT_ID
- claimed_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+ claimed_at: $CLAIM_TIME
+ last_heartbeat: $CLAIM_TIME
+ heartbeat_interval_minutes: 10
+ stale_threshold_minutes: 30
 EOF
 
 # Commit changes
-git add ".agents/claimed/$TASK_ID.toon" ".agents/tasks/" 2>/dev/null || true
-git commit -m "[AGENT-CLAIM] $AGENT_ID claimed $TASK_ID" --quiet
+git add ".agents/claimed/$TASK_PROJECT/$TASK_ID.toon" ".agents/projects/$TASK_PROJECT/tasks/" 2>/dev/null || true
+git commit -m "[AGENT-CLAIM] $AGENT_ID claimed $TASK_ID from $TASK_PROJECT" --quiet
 
 # First to push wins - this is the atomic operation
 if git push origin main --quiet 2>/dev/null; then
     echo "SUCCESS: Claimed $TASK_ID" >&2
-    echo "$TASK_ID"
+    echo "$TASK_PROJECT/$TASK_ID"
     exit 0
 else
     # Someone else got it first, rollback

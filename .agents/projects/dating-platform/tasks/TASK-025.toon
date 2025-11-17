@@ -1,0 +1,146 @@
+task:
+ id: TASK-025
+ project: dating-platform
+ title: Deploy AWS production infrastructure with Terraform
+ type: infrastructure
+ priority: 3
+ status: blocked
+
+description:
+ summary: Create AWS infrastructure for staging and production environments
+ details: |
+  Set up AWS infrastructure using Terraform for staging and production:
+  - Start with AWS Free Tier where possible
+  - ECS Fargate for containerized services (use t3.micro equivalent)
+  - RDS PostgreSQL 15 (use db.t3.micro in free tier)
+  - ElastiCache Redis (use cache.t3.micro)
+  - S3 for photo storage (free tier: 5GB)
+  - CloudFront CDN (free tier: 1TB transfer/month)
+  - Route53 for DNS
+  - ACM for SSL certificates
+  - Secrets Manager for credentials
+  - CloudWatch for monitoring
+  - Auto-scaling policies
+  - Backup and disaster recovery
+
+acceptance_criteria[10]:
+ Terraform scripts create all AWS resources
+ Two environments deployed (staging, production)
+ RDS PostgreSQL 15 running (start with t3.micro)
+ ElastiCache Redis operational (start with t3.micro)
+ S3 buckets with proper IAM policies and lifecycle rules
+ CloudFront distribution serving S3 content
+ SSL certificates via ACM
+ GitHub Actions can deploy to both environments
+ Zero-downtime deployment configured
+ Cost monitoring alerts set at $50/month threshold
+
+dependencies:
+ required[10]:
+  TASK-001 (Local dev environment)
+  TASK-002 (Authentication)
+  TASK-003 (Profile service)
+  TASK-004 (Database schema)
+  TASK-019 (Testing and CI/CD)
+  TASK-020 (React web app)
+  TASK-021 (React Native mobile)
+  TASK-023 (Analytics)
+  TASK-024 (Documentation)
+  Note: Only deploy after MVP is built and tested locally
+ blocks[0]:
+
+context:
+ files_to_create[15]:
+  terraform/main.tf
+  terraform/variables.tf
+  terraform/outputs.tf
+  terraform/modules/networking/main.tf
+  terraform/modules/compute/main.tf
+  terraform/modules/database/main.tf
+  terraform/modules/storage/main.tf
+  terraform/modules/monitoring/main.tf
+  terraform/environments/staging.tfvars
+  terraform/environments/production.tfvars
+  .github/workflows/deploy-staging.yml
+  .github/workflows/deploy-production.yml
+  docs/DEPLOYMENT.md
+  docs/RUNBOOK.md
+  docs/DISASTER_RECOVERY.md
+ related_docs[3]:
+  .agents/projects/dating-platform/architecture.toon
+  docs/dating-platform/README.md
+  docs/DEVELOPMENT.md
+
+technical_details:
+ aws_services[12]:
+  VPC (Virtual Private Cloud)
+  ECS Fargate (compute)
+  RDS PostgreSQL 15 (database)
+  ElastiCache Redis 7 (cache)
+  S3 (storage)
+  CloudFront (CDN)
+  Route53 (DNS)
+  ACM (SSL certificates)
+  Secrets Manager (credentials)
+  CloudWatch (monitoring + alarms)
+  IAM (access control)
+  Auto Scaling (for ECS tasks)
+ terraform_modules[6]:
+  networking (VPC, subnets, security groups, NAT gateway)
+  compute (ECS cluster, task definitions, services, ALB)
+  database (RDS instance, parameter groups, subnet groups)
+  storage (S3 buckets, CloudFront distribution, lifecycle policies)
+  monitoring (CloudWatch dashboards, alarms, SNS topics)
+  secrets (Secrets Manager, IAM roles and policies)
+ cost_optimization[8]:
+  Use AWS Free Tier where available (12 months)
+  Start with t3.micro instances (can scale up later)
+  Use spot instances for non-critical services
+  S3 lifecycle policies (move old data to Glacier)
+  CloudFront caching to reduce origin requests
+  Reserved instances for production (after usage stabilizes)
+  Auto-scaling to handle traffic spikes efficiently
+  Cost monitoring with billing alarms
+ estimated_cost_monthly_usd:
+  staging: $30-50 (mostly free tier)
+  production: $100-150 (with moderate usage)
+  note: Costs increase with user growth, monitor closely
+
+deployment_strategy:
+ staging:
+  trigger: Automatic on merge to develop branch
+  approval: None (auto-deploy)
+  purpose: Testing and QA
+ production:
+  trigger: Manual workflow dispatch
+  approval: Required (2 reviewers)
+  purpose: Live user traffic
+ rollback:
+  method: Terraform state rollback + ECS task revert
+  rto: 15 minutes (Recovery Time Objective)
+  rpo: 5 minutes (Recovery Point Objective)
+
+security_requirements[8]:
+ All traffic over HTTPS (TLS 1.3)
+ Database in private subnets (no public access)
+ Security groups with principle of least privilege
+ Secrets in AWS Secrets Manager (never in code)
+ IAM roles with minimal required permissions
+ S3 buckets with encryption at rest (AES-256)
+ CloudFront with signed URLs for private content
+ WAF rules to prevent common attacks
+
+monitoring_and_alerts[6]:
+ Cost alerts at $50, $100, $150 thresholds
+ Error rate > 1% triggers page
+ Database CPU > 80% triggers alert
+ API p95 latency > 500ms triggers Slack notification
+ Failed deployments trigger page
+ SSL certificate expiration < 30 days alert
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T18:05:00Z
+ note: Deploy only after MVP is validated locally
+ estimated_hours: 20
+ complexity: high

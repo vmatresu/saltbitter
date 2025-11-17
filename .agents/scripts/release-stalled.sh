@@ -1,48 +1,83 @@
 #!/bin/bash
-# Release tasks that have been claimed but not completed within timeout
+# Release tasks that have been claimed but show no heartbeat activity
 # Usage: ./release-stalled.sh [timeout-minutes]
 
 set -e
 
 TIMEOUT_MINUTES="${1:-30}"
-CUTOFF=$(date -u -d "$TIMEOUT_MINUTES minutes ago" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || \
-         date -u -v-${TIMEOUT_MINUTES}M +%Y-%m-%dT%H:%M:%SZ)
+
+# Calculate cutoff time (macOS and Linux compatible)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    CUTOFF=$(date -u -v-${TIMEOUT_MINUTES}M +%Y-%m-%dT%H:%M:%SZ)
+else
+    # Linux
+    CUTOFF=$(date -u -d "$TIMEOUT_MINUTES minutes ago" +%Y-%m-%dT%H:%M:%SZ)
+fi
 
 RELEASED=0
 
-for file in .agents/claimed/TASK-*.toon; do
-    [ -f "$file" ] || continue
+# Search all projects
+for project_dir in .agents/claimed/*/; do
+    [ -d "$project_dir" ] || continue
 
-    TASK_ID=$(basename "$file" .toon)
+    PROJECT=$(basename "$project_dir")
 
-    # Extract claimed_at timestamp
-    CLAIMED_AT=$(grep "claimed_at:" "$file" | awk '{print $2}')
+    for file in "$project_dir"TASK-*.toon; do
+        [ -f "$file" ] || continue
 
-    if [ -z "$CLAIMED_AT" ]; then
-        echo "⚠ Warning: No claimed_at found in $TASK_ID" >&2
-        continue
-    fi
+        TASK_ID=$(basename "$file" .toon)
 
-    # Compare timestamps (lexicographic comparison works for ISO 8601)
-    if [ "$CLAIMED_AT" \< "$CUTOFF" ]; then
-        echo "Releasing stalled task: $TASK_ID (claimed at $CLAIMED_AT)" >&2
+        # Extract last_heartbeat timestamp (fallback to claimed_at if no heartbeat)
+        LAST_HEARTBEAT=$(grep "last_heartbeat:" "$file" | awk '{print $2}')
 
-        # Remove claim metadata
-        sed -i '/^claim:/,$d' "$file" 2>/dev/null || sed -i '' '/^claim:/,$d' "$file"
+        if [ -z "$LAST_HEARTBEAT" ]; then
+            # No heartbeat found, use claimed_at
+            LAST_HEARTBEAT=$(grep "claimed_at:" "$file" | awk '{print $2}')
+        fi
 
-        # Move back to tasks/
-        mv "$file" ".agents/tasks/$TASK_ID.toon"
+        if [ -z "$LAST_HEARTBEAT" ]; then
+            echo "⚠ Warning: No heartbeat or claimed_at found in $PROJECT/$TASK_ID" >&2
+            continue
+        fi
 
-        RELEASED=$((RELEASED + 1))
-    fi
+        # Compare timestamps (lexicographic comparison works for ISO 8601)
+        if [ "$LAST_HEARTBEAT" \< "$CUTOFF" ]; then
+            CLAIMED_BY=$(grep "claimed_by:" "$file" | awk '{print $2}')
+            echo "Releasing stalled task: $PROJECT/$TASK_ID" >&2
+            echo "  Claimed by: $CLAIMED_BY" >&2
+            echo "  Last heartbeat: $LAST_HEARTBEAT" >&2
+            echo "  Cutoff time: $CUTOFF" >&2
+
+            # Remove claim metadata
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                # macOS sed
+                sed -i '' '/^claim:/,$d' "$file"
+            else
+                # Linux sed
+                sed -i '/^claim:/,$d' "$file"
+            fi
+
+            # Move back to project tasks/
+            mv "$file" ".agents/projects/$PROJECT/tasks/$TASK_ID.toon"
+
+            RELEASED=$((RELEASED + 1))
+        fi
+    done
 done
 
 if [ $RELEASED -gt 0 ]; then
     git pull --rebase origin main --quiet 2>/dev/null || true
-    git add .agents/tasks/ .agents/claimed/ 2>/dev/null || true
-    git commit -m "[ORCHESTRATOR] Released $RELEASED stalled tasks (timeout: ${TIMEOUT_MINUTES}m)" --quiet
-    git push origin main --quiet
-    echo "✓ Released $RELEASED stalled tasks"
+    git add .agents/projects/ .agents/claimed/ 2>/dev/null || true
+    git commit -m "[ORCHESTRATOR] Released $RELEASED stalled tasks (no heartbeat for ${TIMEOUT_MINUTES}m)" --quiet
+
+    if git push origin main --quiet 2>/dev/null; then
+        echo "✓ Released $RELEASED stalled tasks" >&2
+    else
+        echo "⚠ Warning: Could not push release (someone else may have released them)" >&2
+        git reset --hard HEAD~1 --quiet
+        exit 1
+    fi
 else
-    echo "✓ No stalled tasks found"
+    echo "✓ No stalled tasks found (checked claimed/* for heartbeats older than ${TIMEOUT_MINUTES}m)" >&2
 fi

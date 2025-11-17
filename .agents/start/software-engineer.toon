@@ -54,8 +54,16 @@ step_4_read_your_task:
   metadata.estimated_hours: Time estimate
   metadata.complexity: Difficulty level
 
+step_4b_send_heartbeats:
+ purpose: Signal you are actively working to prevent task being released
+ frequency: Every 10-15 minutes during implementation
+ command: ./agents/scripts/heartbeat-task.sh {task-id} {agent-id} {project}
+ why_important: Tasks with no heartbeat for 30+ minutes are auto-released to other agents
+ note: Heartbeat updates last_heartbeat timestamp in claimed task file
+
 step_5_implement_the_task:
  branch: git checkout -b feature/{task-id}-{description}
+ remember_heartbeats: Run heartbeat script every 10-15 minutes while working
  standards_by_project:
   dating-platform:
    backend[5]:
