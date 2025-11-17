@@ -1,0 +1,146 @@
+name: Feature Branch Testing
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'fix/**'
+      - 'TASK-*/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          pip install pytest pytest-cov pytest-asyncio ruff mypy bandit safety pyyaml
+
+      - name: Run linting (ruff)
+        continue-on-error: true
+        run: |
+          if [ -d src ]; then
+            ruff check src/ --output-format=json > /tmp/ruff-results.json || true
+            ruff check src/ || true
+          else
+            echo "No src directory found, skipping linting"
+          fi
+
+      - name: Run type checking (mypy)
+        continue-on-error: true
+        run: |
+          if [ -d src ]; then
+            mypy src/ --no-error-summary || true
+          else
+            echo "No src directory found, skipping type checking"
+          fi
+
+      - name: Run security scan (bandit)
+        continue-on-error: true
+        run: |
+          if [ -d src ]; then
+            bandit -r src/ -f json -o /tmp/bandit-results.json || true
+          else
+            echo "No src directory found, skipping security scan"
+          fi
+
+      - name: Run automated tests
+        id: test
+        continue-on-error: true
+        run: |
+          if [ -d tests ]; then
+            pytest tests/ \
+              --cov=src \
+              --cov-report=json \
+              --cov-report=term \
+              --junitxml=test-results.xml \
+              -v || true
+          else
+            echo "No tests directory found, skipping tests"
+            echo '{"totals": {"percent_covered": 0}}' > coverage.json
+            echo '<?xml version="1.0" ?><testsuite tests="0" failures="0" errors="0"></testsuite>' > test-results.xml
+          fi
+
+      - name: Update agent status with results
+        if: always()
+        run: |
+          python .agents/scripts/update_test_results.py \
+            --branch ${{ github.ref_name }} \
+            --results test-results.xml \
+            --coverage coverage.json || echo "Failed to update agent status"
+
+      - name: Commit agent status update
+        if: always()
+        run: |
+          git config user.name "Feature Test Bot"
+          git config user.email "feature-test@users.noreply.github.com"
+          git add .agents/status/ || true
+          git commit -m "[TEST-RESULTS] Update for ${{ github.ref_name }}" || echo "No status changes"
+          git pull --rebase || true
+          git push || echo "Nothing to push"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.ref_name }}
+          path: |
+            test-results.xml
+            coverage.json
+            /tmp/ruff-results.json
+            /tmp/bandit-results.json
+          retention-days: 30
+
+      - name: Comment test summary on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            let coverage = 0;
+            try {
+              const coverageData = JSON.parse(fs.readFileSync('coverage.json', 'utf8'));
+              coverage = coverageData.totals.percent_covered.toFixed(1);
+            } catch (e) {
+              coverage = 'N/A';
+            }
+
+            const comment = `## 🤖 Automated Test Results
+
+            **Branch:** \`${{ github.ref_name }}\`
+            **Coverage:** ${coverage}%
+
+            ✅ Tests completed - check artifacts for detailed results
+
+            *Updated: ${new Date().toISOString()}*
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

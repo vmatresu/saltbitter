@@ -1,0 +1,112 @@
+name: Agent Cleanup
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+
+      - name: Configure Git
+        run: |
+          git config user.name "Agent Cleanup Bot"
+          git config user.email "agent-cleanup@users.noreply.github.com"
+
+      - name: Clean up timed-out agents
+        run: |
+          python3 << 'EOF'
+          import json
+          from datetime import datetime, timezone, timedelta
+          from pathlib import Path
+
+          registry_path = Path(".agents/registry.json")
+          if not registry_path.exists():
+              print("No registry found")
+              exit(0)
+
+          with open(registry_path) as f:
+              registry = json.load(f)
+
+          timeout_hours = 24
+          now = datetime.now(timezone.utc)
+          cleaned = []
+
+          for agent in registry["agents"][:]:
+              last_heartbeat = datetime.fromisoformat(agent["last_heartbeat"].replace('Z', '+00:00'))
+              if now - last_heartbeat > timedelta(hours=timeout_hours):
+                  print(f"Removing timed-out agent: {agent['id']}")
+                  registry["agents"].remove(agent)
+                  cleaned.append(agent["id"])
+
+          if cleaned:
+              registry["metadata"]["last_updated"] = now.isoformat()
+              with open(registry_path, "w") as f:
+                  json.dump(registry, f, indent=2)
+              print(f"Cleaned up {len(cleaned)} agents")
+          else:
+              print("No agents to clean up")
+          EOF
+
+      - name: Archive old logs
+        run: |
+          python3 << 'EOF'
+          import shutil
+          from datetime import datetime, timedelta
+          from pathlib import Path
+
+          logs_dir = Path(".agents/logs")
+          if not logs_dir.exists():
+              exit(0)
+
+          archive_dir = logs_dir / "archive"
+          archive_dir.mkdir(exist_ok=True)
+
+          # Archive logs older than 30 days
+          cutoff = datetime.now() - timedelta(days=30)
+
+          for log_file in logs_dir.glob("*.log"):
+              if log_file.stat().st_mtime < cutoff.timestamp():
+                  print(f"Archiving old log: {log_file.name}")
+                  shutil.move(str(log_file), str(archive_dir / log_file.name))
+          EOF
+
+      - name: Clean up old status files
+        run: |
+          # Move completed agent status files to archive
+          if [ -d .agents/status/archive ]; then
+            find .agents/status -maxdepth 1 -name "*.md" -type f -mtime +7 -exec mv {} .agents/status/archive/ \; || true
+          fi
+
+      - name: Commit cleanup changes
+        run: |
+          git add .agents/
+          git commit -m "[CLEANUP] Agent registry and logs cleanup $(date -u +%Y-%m-%dT%H:%M:%SZ)" || echo "No changes to commit"
+          git pull --rebase
+          git push || echo "Nothing to push"
+
+      - name: Cleanup summary
+        run: |
+          echo "### Agent Cleanup Summary"
+          echo "- Registry cleaned"
+          echo "- Old logs archived"
+          echo "- Status files organized"

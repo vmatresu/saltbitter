@@ -1,0 +1,70 @@
+# Agent Orchestration Configuration
+
+system:
+  max_workers: 8
+  min_viable_workers: 4
+  max_concurrent_agents: 10
+
+coordinator:
+  poll_interval_seconds: 30
+  heartbeat_timeout_minutes: 10
+  enable_auto_scaling: true
+  priority_algorithm: "weighted"  # weighted, fifo, lifo
+
+agents:
+  heartbeat_interval_seconds: 60
+  max_retries: 3
+  retry_backoff_seconds: 2
+
+tasks:
+  default_priority: 5
+  max_complexity_points: 100
+  auto_decompose_threshold: 50
+
+git:
+  feature_branch_prefix: "feature/TASK-"
+  fix_branch_prefix: "fix/TASK-"
+  commit_message_format: "[TASK-{id}] {description}"
+  main_branch: "main"
+  require_pr_reviews: true
+  auto_merge_on_approval: false
+
+testing:
+  min_coverage_percent: 80
+  require_unit_tests: true
+  require_integration_tests: true
+  test_timeout_minutes: 15
+
+quality:
+  linter: "ruff"
+  formatter: "black"
+  type_checker: "mypy"
+  security_scanner: "bandit"
+
+failure_handling:
+  max_test_failures_before_block: 5
+  max_heartbeat_failures: 3
+  escalate_blocked_tasks: true
+  auto_rollback_on_failure: false
+
+notifications:
+  enable_status_updates: true
+  notify_on_completion: true
+  notify_on_failure: true
+
+capabilities:
+  available:
+    - python
+    - fastapi
+    - postgresql
+    - redis
+    - docker
+    - testing
+    - frontend
+    - database
+    - devops
+
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  retention_days: 30
+  log_to_file: true

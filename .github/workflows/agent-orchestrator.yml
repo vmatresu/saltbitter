@@ -1,0 +1,64 @@
+name: Agent Orchestrator
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # Every 5 minutes
+  workflow_dispatch:
+  push:
+    paths:
+      - '.agents/tasks/queue.json'
+      - '.agents/registry.json'
+
+jobs:
+  coordinate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+
+      - name: Configure Git
+        run: |
+          git config user.name "Agent Coordinator"
+          git config user.email "agent-coordinator@users.noreply.github.com"
+
+      - name: Run Coordinator Agent
+        run: |
+          python .agents/coordinator.py \
+            --spawn-workers \
+            --max-parallel 8 \
+            --prioritize
+
+      - name: Commit coordination changes
+        run: |
+          git add .agents/
+          git commit -m "[COORDINATOR] Task distribution update $(date -u +%Y-%m-%dT%H:%M:%SZ)" || echo "No changes to commit"
+          git pull --rebase
+          git push || echo "Nothing to push"
+
+      - name: Generate status report
+        run: |
+          python .agents/coordinator.py --report > /tmp/agent-status.json
+          cat /tmp/agent-status.json
+
+      - name: Upload status report
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-status-report
+          path: /tmp/agent-status.json
+          retention-days: 7
