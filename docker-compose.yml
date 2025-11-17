@@ -1,9 +1,9 @@
 version: '3.9'
 
 services:
-  # PostgreSQL 15 Database
+  # PostgreSQL 15 Database with PostGIS
   postgres:
-    image: postgres:15-alpine
+    image: postgis/postgis:15-3.4-alpine
     container_name: saltbitter-postgres
     environment:
       POSTGRES_USER: postgres
