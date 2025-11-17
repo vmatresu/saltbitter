@@ -1,0 +1,81 @@
+task:
+ id: TASK-014
+ project: dating-platform
+ title: Build microtransaction system for boosts and features
+ type: backend
+ priority: 5
+ status: blocked
+
+description:
+ summary: Implement one-time purchases (Profile Boost, Super Like, AI Icebreaker, Event Tickets)
+ details: |
+  Create microtransaction features:
+  - Profile Boost ($4.99): Featured placement for 24 hours
+  - Super Like ($1.99): Stand out to a match
+  - AI Icebreaker ($2.99): GPT-4 personalized conversation starter
+  - Event Ticket ($15): Access to premium virtual events
+  - Stripe one-time payment integration
+  - Purchase history tracking
+  - Usage tracking and expiration
+  - Inventory management for limited items
+  - Revenue analytics by product
+
+acceptance_criteria[10]:
+ POST /api/payments creates one-time Stripe payment
+ Profile Boost increases visibility for 24 hours
+ Super Like sends special notification to recipient
+ AI Icebreaker generates personalized opening message
+ Event tickets grant access to specific events
+ Purchase records saved with Stripe payment ID
+ Boosts expire after 24 hours automatically
+ GET /api/purchases/{user_id} shows purchase history
+ Revenue metrics tracked by product type
+ Integration tests with mocked Stripe API
+
+dependencies:
+ required[2]:
+  TASK-009
+  TASK-013
+ blocks[1]:
+  TASK-015
+
+context:
+ files_to_create[8]:
+  backend/services/payment/microtransactions.py
+  backend/services/payment/boost.py
+  backend/services/payment/super_like.py
+  backend/services/payment/icebreaker.py
+  backend/services/payment/inventory.py
+  backend/services/payment/tests/test_microtransactions.py
+  backend/workers/expire_boosts.py
+  backend/database/models/purchase.py
+
+technical_details:
+ stack[4]:
+  FastAPI 0.104+
+  Stripe Python SDK 7.0+
+  OpenAI SDK (for AI Icebreaker)
+  Celery (for expiration tasks)
+ endpoints[5]:
+  POST /api/payments
+  POST /api/boosts (purchase + activate)
+  POST /api/super-likes/{match_id}
+  POST /api/icebreakers/{match_id}
+  GET /api/purchases
+ products[4]{name,price_usd,duration_hours,stripe_price_id}:
+  Profile Boost,4.99,24,price_boost
+  Super Like,1.99,null,price_super_like
+  AI Icebreaker,2.99,null,price_icebreaker
+  Event Ticket,15.00,null,price_event_ticket
+
+boost_mechanics:
+ visibility_multiplier: 10x
+ duration_hours: 24
+ max_concurrent_boosts: 1
+ expiration_task: Celery beat every hour
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:14:00Z
+ estimated_hours: 12
+ complexity: medium

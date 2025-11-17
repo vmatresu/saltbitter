@@ -1,0 +1,112 @@
+task:
+ id: TASK-022
+ project: dating-platform
+ title: Create admin dashboard and moderation tools
+ type: frontend
+ priority: 6
+ status: blocked
+
+description:
+ summary: Build internal admin dashboard for platform management
+ details: |
+  Create admin interface:
+  - User management and search
+  - Moderation queue for flagged content
+  - Analytics dashboard with charts
+  - Subscription and revenue metrics
+  - Event management (create, edit, cancel)
+  - Compliance reports and audit logs
+  - System health monitoring
+  - Feature flag management
+  - Ban and suspend user functionality
+  - Customer support ticket system
+  - Email notification templates
+  - A/B test configuration
+
+acceptance_criteria[12]:
+ Admin authentication with role-based access
+ User search and profile viewing
+ Moderation queue shows flagged messages/photos
+ Approve or reject moderated content
+ Analytics charts (DAU, MAU, MRR, conversions)
+ Event management interface
+ Compliance report downloads
+ System metrics dashboard (API latency, errors)
+ Feature flags toggle without deployment
+ Ban/suspend users with reason tracking
+ Customer support ticket interface
+ Email template editor
+
+dependencies:
+ required[5]:
+  TASK-002
+  TASK-012
+  TASK-013
+  TASK-015
+  TASK-016
+ blocks[0]:
+
+context:
+ files_to_create[18]:
+  admin/package.json
+  admin/src/pages/Dashboard.tsx
+  admin/src/pages/Users.tsx
+  admin/src/pages/Moderation.tsx
+  admin/src/pages/Analytics.tsx
+  admin/src/pages/Events.tsx
+  admin/src/pages/Compliance.tsx
+  admin/src/pages/System.tsx
+  admin/src/components/UserTable.tsx
+  admin/src/components/ModerationQueue.tsx
+  admin/src/components/AnalyticsChart.tsx
+  admin/src/components/FeatureFlags.tsx
+  admin/src/hooks/useAdminAuth.ts
+  admin/src/api/admin.ts
+  backend/services/admin/main.py
+  backend/services/admin/routes.py
+  backend/services/admin/permissions.py
+  backend/services/admin/tests/test_admin.py
+
+technical_details:
+ stack[6]:
+  React 18 + TypeScript
+  TailwindCSS
+  Recharts for analytics
+  React Query
+  FastAPI backend endpoints
+  PostgreSQL for admin data
+ admin_roles[3]:
+  super_admin: Full access
+  moderator: Content moderation only
+  support: User support and basic analytics
+ endpoints[12]:
+  GET /api/admin/users
+  PUT /api/admin/users/{id}/ban
+  GET /api/admin/moderation/queue
+  PUT /api/admin/moderation/{id}/review
+  GET /api/admin/analytics/metrics
+  GET /api/admin/analytics/revenue
+  POST /api/admin/events
+  GET /api/admin/compliance/reports
+  GET /api/admin/system/health
+  PUT /api/admin/feature-flags/{key}
+  GET /api/admin/support/tickets
+  POST /api/admin/emails/templates
+
+analytics_metrics[10]:
+ Daily Active Users (DAU)
+ Monthly Active Users (MAU)
+ Conversion rate by tier
+ Monthly Recurring Revenue (MRR)
+ Customer Acquisition Cost (CAC)
+ Lifetime Value (LTV)
+ Match-to-conversation rate
+ Conversation-to-date rate
+ Churn rate by tier
+ Average session duration
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:30:00Z
+ estimated_hours: 18
+ complexity: medium

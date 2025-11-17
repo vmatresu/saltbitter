@@ -1,0 +1,87 @@
+task:
+ id: TASK-008
+ project: dating-platform
+ title: Implement real-time messaging service
+ type: backend
+ priority: 7
+ status: blocked
+
+description:
+ summary: Build WebSocket-based real-time chat for matched users
+ details: |
+  Create messaging system:
+  - WebSocket connection management with FastAPI
+  - Real-time message delivery between matches
+  - Message persistence in PostgreSQL
+  - Redis pub/sub for multi-instance scaling
+  - Typing indicators and read receipts
+  - Message history pagination
+  - Content moderation via Perspective API
+  - Report and block functionality
+  - Push notifications for offline users
+
+acceptance_criteria[10]:
+ WebSocket endpoint /ws/messages/{user_id} handles connections
+ Messages delivered in real-time to online users
+ Messages persisted to database immediately
+ Redis pub/sub enables multi-instance message routing
+ Typing indicators broadcast to conversation partner
+ Read receipts update when messages viewed
+ Message history paginated (50 messages per page)
+ Perspective API flags toxic content (score > 0.7)
+ Users can report or block matches
+ Offline users receive push notifications
+
+dependencies:
+ required[4]:
+  TASK-001
+  TASK-002
+  TASK-004
+  TASK-007
+ blocks[0]:
+
+context:
+ files_to_create[8]:
+  backend/services/messaging/main.py
+  backend/services/messaging/websocket.py
+  backend/services/messaging/models.py
+  backend/services/messaging/schemas.py
+  backend/services/messaging/moderation.py
+  backend/services/messaging/notifications.py
+  backend/services/messaging/tests/test_messaging.py
+  backend/services/messaging/tests/test_websocket.py
+
+technical_details:
+ stack[5]:
+  FastAPI WebSocket support
+  Redis pub/sub for message routing
+  PostgreSQL for message persistence
+  Perspective API for content moderation
+  APNs/FCM for push notifications
+ endpoints[4]:
+  WS /ws/messages/{user_id}
+  GET /api/messages (conversation list)
+  GET /api/messages/{match_id} (message history)
+  POST /api/messages/{match_id}/report
+ websocket_events[5]:
+  message (send/receive messages)
+  typing (typing indicators)
+  read (read receipts)
+  connection (online status)
+  error (error handling)
+
+moderation_requirements:
+ perspective_api_threshold: 0.7
+ moderation_attributes[4]:
+  TOXICITY
+  SEVERE_TOXICITY
+  IDENTITY_ATTACK
+  THREAT
+ auto_flag_threshold: 0.85
+ human_review_queue: Messages scoring 0.7-0.85
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:02:00Z
+ estimated_hours: 14
+ complexity: high

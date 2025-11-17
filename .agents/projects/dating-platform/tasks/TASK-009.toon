@@ -1,0 +1,82 @@
+task:
+ id: TASK-009
+ project: dating-platform
+ title: Build AI practice companions with GPT-4
+ type: backend
+ priority: 6
+ status: blocked
+
+description:
+ summary: Create AI-powered practice conversation partners with clear disclosure
+ details: |
+  Implement AI practice companions:
+  - 5 distinct AI personas (Confident, Thoughtful, Playful, Direct, Empathetic)
+  - OpenAI GPT-4 integration for conversations
+  - Conversation state management
+  - EU AI Act Article 52 compliance (clear AI labeling)
+  - California SB 243 compliance (disclosure + opt-out)
+  - Opt-in required before accessing AI features
+  - 🤖 badge on all AI profiles
+  - Conversation coaching suggestions
+  - Practice conversation history
+  - Rate limiting for API cost control
+
+acceptance_criteria[10]:
+ GET /api/ai/companions lists 5 AI personas with 🤖 badge
+ Each AI persona has distinct personality and conversation style
+ POST /api/ai/companions/{id}/chat sends message to GPT-4
+ AI responses generated using GPT-4 with persona-specific prompts
+ Disclosure shown before first AI interaction
+ Users can opt-out of AI features in settings
+ All AI interactions logged to ai_interactions table
+ Conversation history persisted per user per companion
+ Rate limiting 50 AI messages per day for free tier
+ Integration tests with mocked OpenAI API
+
+dependencies:
+ required[3]:
+  TASK-001
+  TASK-002
+  TASK-004
+ blocks[1]:
+  TASK-010
+
+context:
+ files_to_create[8]:
+  backend/services/ai/main.py
+  backend/services/ai/models.py
+  backend/services/ai/schemas.py
+  backend/services/ai/personas.py
+  backend/services/ai/openai_client.py
+  backend/services/ai/compliance.py
+  backend/services/ai/tests/test_ai.py
+  backend/services/ai/tests/test_compliance.py
+
+technical_details:
+ stack[3]:
+  FastAPI 0.104+
+  OpenAI Python SDK 1.3+
+  SQLAlchemy 2.0
+ endpoints[3]:
+  GET /api/ai/companions
+  POST /api/ai/companions/{id}/chat
+  PUT /api/ai/settings (opt-in/opt-out)
+ ai_personas[5]{name,style,prompt_prefix}:
+  Confident,"Direct, assertive, self-assured","You are a confident person who..."
+  Thoughtful,"Reflective, deep, philosophical","You are a thoughtful person who..."
+  Playful,"Fun, witty, lighthearted","You are a playful person who..."
+  Direct,"Straightforward, honest, clear","You are a direct person who..."
+  Empathetic,"Caring, understanding, supportive","You are an empathetic person who..."
+
+compliance_requirements:
+ eu_ai_act_article_52: All AI profiles clearly marked with 🤖 badge
+ sb_243_disclosure: Shown before first interaction
+ sb_243_opt_out: Available in settings before and after signup
+ transparency_logging: All interactions logged with timestamps
+ human_alternatives: Practice features available with real users too
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:04:00Z
+ estimated_hours: 12
+ complexity: high

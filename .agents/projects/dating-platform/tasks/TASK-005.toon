@@ -1,0 +1,79 @@
+task:
+ id: TASK-005
+ project: dating-platform
+ title: Implement attachment assessment questionnaire
+ type: backend
+ priority: 9
+ status: blocked
+
+description:
+ summary: Create 25-question attachment style assessment with scoring algorithm
+ details: |
+  Build attachment assessment system:
+  - 25 validated questions from ECR-R (Experiences in Close Relationships-Revised)
+  - Likert scale responses (1-7)
+  - Calculate anxiety and avoidance dimension scores
+  - Classify into 4 attachment styles (Secure, Anxious, Avoidant, Fearful-Avoidant)
+  - Store results with user consent (GDPR Article 9 special category data)
+  - Provide interpretation and insights
+  - Retake option with 90-day cooldown
+
+acceptance_criteria[10]:
+ GET /api/attachment/assessment returns 25 questions
+ POST /api/attachment/assessment validates all responses
+ Anxiety score calculated from 18 questions (average)
+ Avoidance score calculated from 18 questions (average)
+ Attachment style classified correctly based on scores
+ GET /api/attachment/results/{user_id} returns style and insights
+ Explicit consent collected before assessment
+ Users can retake after 90 days
+ Unit tests validate scoring algorithm
+ Integration tests cover full assessment flow
+
+dependencies:
+ required[3]:
+  TASK-001
+  TASK-002
+  TASK-004
+ blocks[1]:
+  TASK-006
+
+context:
+ files_to_create[6]:
+  backend/services/attachment/main.py
+  backend/services/attachment/models.py
+  backend/services/attachment/schemas.py
+  backend/services/attachment/scoring.py
+  backend/services/attachment/questions.py
+  backend/services/attachment/tests/test_assessment.py
+
+technical_details:
+ stack[2]:
+  FastAPI 0.104+
+  SQLAlchemy 2.0
+ endpoints[3]:
+  GET /api/attachment/assessment
+  POST /api/attachment/assessment
+  GET /api/attachment/results/{user_id}
+ scoring_algorithm:
+  anxiety_items[18]: 1,3,5,7,9,11,13,15,17,19,21,23,2,4,6,8,10,12
+  avoidance_items[18]: 2,4,6,8,10,12,14,16,18,20,22,24,1,3,5,7,9,11
+  anxiety_threshold: 3.5
+  avoidance_threshold: 3.5
+  styles[4]:
+   Secure (anxiety < 3.5 AND avoidance < 3.5)
+   Anxious (anxiety >= 3.5 AND avoidance < 3.5)
+   Avoidant (anxiety < 3.5 AND avoidance >= 3.5)
+   Fearful-Avoidant (anxiety >= 3.5 AND avoidance >= 3.5)
+
+compliance_requirements:
+ gdpr_article_9: Special category data (psychological assessment)
+ consent_required: Explicit opt-in before assessment
+ data_retention: User can delete results anytime
+ transparency: Clear explanation of how data is used
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T16:56:00Z
+ estimated_hours: 10
+ complexity: medium

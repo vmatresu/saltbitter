@@ -1,0 +1,87 @@
+task:
+ id: TASK-015
+ project: dating-platform
+ title: Create virtual events platform
+ type: backend
+ priority: 5
+ status: blocked
+
+description:
+ summary: Build event management system for virtual speed dating and community events
+ details: |
+  Implement events platform:
+  - Event creation and management (admin)
+  - Event types: Speed Dating, Workshop, Community Chat
+  - Capacity limits and registration
+  - Event pricing (free for some, paid for premium)
+  - Calendar view of upcoming events
+  - Zoom/Jitsi integration for video events
+  - Automated reminders before events
+  - Post-event follow-ups
+  - Event analytics and attendance tracking
+  - Community building features
+
+acceptance_criteria[10]:
+ POST /api/events creates new event (admin)
+ GET /api/events lists upcoming events
+ POST /api/events/{id}/register registers user
+ Registration respects capacity limits
+ Paid events require valid subscription or payment
+ Email reminders sent 24h and 1h before event
+ Zoom link generated for virtual events
+ Attendance tracked when users join
+ Post-event survey sent to attendees
+ Analytics show registration and attendance rates
+
+dependencies:
+ required[2]:
+  TASK-004
+  TASK-014
+ blocks[0]:
+
+context:
+ files_to_create[9]:
+  backend/services/events/main.py
+  backend/services/events/models.py
+  backend/services/events/schemas.py
+  backend/services/events/registration.py
+  backend/services/events/video.py
+  backend/services/events/reminders.py
+  backend/services/events/analytics.py
+  backend/services/events/tests/test_events.py
+  backend/workers/event_reminders.py
+
+technical_details:
+ stack[5]:
+  FastAPI 0.104+
+  SQLAlchemy 2.0
+  Zoom SDK or Jitsi Meet
+  Celery for reminders
+  SendGrid for emails
+ endpoints[7]:
+  POST /api/events (admin)
+  GET /api/events
+  GET /api/events/{id}
+  POST /api/events/{id}/register
+  DELETE /api/events/{id}/register
+  GET /api/events/{id}/attendees (admin)
+  POST /api/events/{id}/survey
+ event_types[3]{type,capacity,duration_minutes}:
+  Speed Dating,20,60
+  Workshop,50,90
+  Community Chat,100,45
+
+event_workflow:
+ creation: Admin creates event
+ registration: Users register (payment if required)
+ reminder_24h: Email + push notification
+ reminder_1h: Email + push notification
+ event_start: Zoom link activated
+ event_end: Survey sent to attendees
+ follow_up: Thank you email + match suggestions
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:16:00Z
+ estimated_hours: 14
+ complexity: medium

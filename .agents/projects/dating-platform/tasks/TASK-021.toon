@@ -1,0 +1,114 @@
+task:
+ id: TASK-021
+ project: dating-platform
+ title: Build React Native mobile applications
+ type: mobile
+ priority: 7
+ status: blocked
+
+description:
+ summary: Create iOS and Android apps using React Native and Expo
+ details: |
+  Build mobile applications:
+  - React Native with Expo SDK 50+
+  - TypeScript for type safety
+  - Shared components with web app
+  - Native navigation with React Navigation
+  - Push notifications (APNs + FCM)
+  - Biometric authentication (Face ID, Touch ID)
+  - Camera integration for photo uploads
+  - Location services for proximity matching
+  - Deep linking for email verification
+  - App Store and Google Play deployment
+  - Over-the-air updates via Expo
+  - Offline support with async storage
+
+acceptance_criteria[12]:
+ Expo project initialized with TypeScript
+ Authentication flow (login, signup, biometric)
+ Profile creation with camera photo upload
+ Match browsing with swipe gestures
+ Real-time messaging with WebSocket
+ Push notifications for matches and messages
+ Location permission and GPS access
+ Deep linking for email verification links
+ iOS build submitted to App Store
+ Android build submitted to Google Play
+ OTA updates configured via Expo
+ Testing on real iOS and Android devices
+
+dependencies:
+ required[4]:
+  TASK-002
+  TASK-003
+  TASK-007
+  TASK-008
+ blocks[0]:
+
+context:
+ files_to_create[20]:
+  mobile/package.json
+  mobile/app.json
+  mobile/tsconfig.json
+  mobile/App.tsx
+  mobile/src/navigation/AppNavigator.tsx
+  mobile/src/screens/LoginScreen.tsx
+  mobile/src/screens/SignupScreen.tsx
+  mobile/src/screens/ProfileScreen.tsx
+  mobile/src/screens/MatchesScreen.tsx
+  mobile/src/screens/MessagesScreen.tsx
+  mobile/src/screens/SettingsScreen.tsx
+  mobile/src/components/MatchCard.tsx
+  mobile/src/components/MessageBubble.tsx
+  mobile/src/hooks/useAuth.tsx
+  mobile/src/hooks/usePushNotifications.tsx
+  mobile/src/hooks/useLocation.tsx
+  mobile/src/utils/api.ts
+  mobile/src/utils/storage.ts
+  mobile/eas.json
+  mobile/Dockerfile
+
+technical_details:
+ stack[7]:
+  React Native (Expo SDK 50+)
+  TypeScript 5.0+
+  React Navigation 6.0+
+  Expo Push Notifications
+  Expo Camera
+  Expo Location
+  AsyncStorage
+ screens[12]:
+  Login
+  Signup
+  Email Verification
+  Profile Setup
+  Matches (swipe interface)
+  Match Details
+  Messages List
+  Chat
+  AI Companions
+  Settings
+  Subscription
+  Transparency
+
+native_features[6]:
+ push_notifications: APNs + FCM integration
+ biometric_auth: Face ID, Touch ID, fingerprint
+ camera: Photo upload with compression
+ location: GPS for proximity matching
+ deep_linking: Email verification, password reset
+ background_fetch: New match notifications
+
+app_store_requirements:
+ ios_version: iOS 14.0+
+ android_version: Android 10 (API 29)+
+ app_icons: All required sizes
+ screenshots: Required for both stores
+ privacy_manifest: iOS privacy requirements
+ app_tracking_transparency: iOS 14.5+
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:28:00Z
+ estimated_hours: 24
+ complexity: high

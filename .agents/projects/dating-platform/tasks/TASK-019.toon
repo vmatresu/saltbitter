@@ -1,0 +1,96 @@
+task:
+ id: TASK-019
+ project: dating-platform
+ title: Create comprehensive testing and CI/CD pipeline
+ type: infrastructure
+ priority: 8
+ status: blocked
+
+description:
+ summary: Build complete testing infrastructure and GitHub Actions CI/CD
+ details: |
+  Implement testing and deployment:
+  - Unit tests with pytest (85%+ coverage)
+  - Integration tests for all services
+  - E2E tests with Playwright
+  - Security scanning (bandit, npm audit)
+  - Type checking (mypy strict mode)
+  - Linting (ruff for Python, ESLint for TypeScript)
+  - Performance benchmarking
+  - GitHub Actions workflows
+  - Automated deployment to dev/staging/prod
+  - Rollback procedures
+
+acceptance_criteria[12]:
+ pytest unit tests with 85%+ coverage
+ Integration tests for all API endpoints
+ E2E tests cover critical user flows
+ Bandit security scans passing
+ npm audit shows no vulnerabilities
+ mypy type checking in strict mode
+ ruff and ESLint passing with no warnings
+ Performance benchmarks meet targets
+ GitHub Actions run on all PRs
+ Automated deployment to staging on merge
+ Manual approval required for production
+ Rollback script tested and documented
+
+dependencies:
+ required[1]:
+  TASK-001
+ blocks[0]:
+
+context:
+ files_to_create[15]:
+  .github/workflows/ci.yml
+  .github/workflows/deploy-staging.yml
+  .github/workflows/deploy-production.yml
+  backend/pytest.ini
+  backend/conftest.py
+  backend/tests/integration/test_api.py
+  backend/tests/e2e/test_user_flows.py
+  backend/tests/performance/test_benchmarks.py
+  frontend/tests/e2e/playwright.config.ts
+  frontend/tests/e2e/user-flows.spec.ts
+  scripts/rollback.sh
+  scripts/run-tests.sh
+  .coveragerc
+  mypy.ini
+  .eslintrc.json
+
+technical_details:
+ stack[8]:
+  pytest with pytest-cov
+  Playwright for E2E tests
+  locust for performance testing
+  bandit for security scanning
+  mypy for type checking
+  ruff for Python linting
+  ESLint for TypeScript linting
+  GitHub Actions for CI/CD
+ test_categories[4]:
+  unit: 85%+ coverage requirement
+  integration: All API endpoints
+  e2e: Critical user journeys
+  performance: API response times
+
+ci_workflow[6]:
+ Run unit tests
+ Run integration tests
+ Run E2E tests
+ Security scanning
+ Type checking
+ Linting
+
+cd_workflow[5]:
+ Build Docker images
+ Push to ECR
+ Deploy to ECS
+ Run smoke tests
+ Notify team
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:24:00Z
+ estimated_hours: 16
+ complexity: high

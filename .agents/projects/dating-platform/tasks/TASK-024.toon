@@ -1,0 +1,114 @@
+task:
+ id: TASK-024
+ project: dating-platform
+ title: Create comprehensive documentation and runbooks
+ type: documentation
+ priority: 5
+ status: blocked
+
+description:
+ summary: Write complete technical documentation and operational runbooks
+ details: |
+  Create documentation suite:
+  - API documentation with OpenAPI/Swagger
+  - Architecture decision records (ADRs)
+  - Database schema documentation
+  - Deployment runbooks
+  - Incident response procedures
+  - Monitoring and alerting guide
+  - Security best practices
+  - GDPR compliance procedures
+  - Onboarding guide for new engineers
+  - Code contribution guidelines
+  - Testing strategy documentation
+  - Disaster recovery procedures
+
+acceptance_criteria[12]:
+ OpenAPI spec auto-generated from FastAPI
+ Swagger UI accessible at /docs endpoint
+ 10+ ADRs documenting key decisions
+ Database ER diagram with table descriptions
+ Deployment runbook for all environments
+ Incident response playbook with escalation
+ Monitoring dashboard documentation
+ Security checklist for code review
+ GDPR compliance checklist
+ Engineer onboarding guide (1-week plan)
+ CONTRIBUTING.md with PR process
+ Disaster recovery tested and documented
+
+dependencies:
+ required[1]:
+  TASK-019
+ blocks[0]:
+
+context:
+ files_to_create[20]:
+  docs/README.md
+  docs/API.md
+  docs/ARCHITECTURE.md
+  docs/DATABASE.md
+  docs/DEPLOYMENT.md
+  docs/MONITORING.md
+  docs/SECURITY.md
+  docs/COMPLIANCE.md
+  docs/ONBOARDING.md
+  docs/CONTRIBUTING.md
+  docs/DISASTER_RECOVERY.md
+  docs/INCIDENT_RESPONSE.md
+  docs/adrs/001-use-fastapi.md
+  docs/adrs/002-postgresql-over-mongodb.md
+  docs/adrs/003-attachment-theory-algorithm.md
+  docs/adrs/004-eu-ai-act-compliance.md
+  docs/adrs/005-microservices-architecture.md
+  docs/diagrams/architecture.mmd
+  docs/diagrams/database-er.mmd
+  CONTRIBUTING.md
+
+technical_details:
+ documentation_tools[4]:
+  OpenAPI 3.1 for API specs
+  Mermaid for diagrams
+  Markdown for all docs
+  Sphinx for API reference
+ adr_template:
+  title: Decision title
+  status: Accepted/Rejected/Superseded
+  context: Background and problem
+  decision: What was decided
+  consequences: Trade-offs and implications
+ required_adrs[10]:
+  Use FastAPI over Django
+  PostgreSQL over MongoDB
+  Attachment theory for matching algorithm
+  EU AI Act compliance approach
+  Microservices vs monolith
+  JWT authentication strategy
+  Redis for caching and queues
+  Stripe for payments
+  React Native for mobile apps
+  DataDog for monitoring
+
+runbooks[8]:
+ deployment: How to deploy to each environment
+ rollback: How to rollback a bad deployment
+ database_migration: How to run and rollback migrations
+ scaling: How to scale services under load
+ incident_response: Who to notify, escalation paths
+ backup_restore: How to restore from backups
+ security_breach: Steps if data breach detected
+ gdpr_request: How to handle data export/deletion
+
+monitoring_alerts[6]:
+ error_rate: > 1% triggers page
+ api_latency: p95 > 500ms triggers Slack
+ database_cpu: > 80% triggers auto-scale
+ payment_failures: > 5% triggers page
+ message_queue: > 1000 backlog triggers alert
+ ssl_expiration: < 30 days triggers email
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:34:00Z
+ estimated_hours: 12
+ complexity: low

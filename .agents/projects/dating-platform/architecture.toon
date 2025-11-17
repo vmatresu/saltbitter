@@ -1,0 +1,186 @@
+architecture:
+ project_id: dating-platform
+ name: SaltBitter Dating Platform System Design
+ style: Microservices with API Gateway
+ created_by: architect-agent
+ created_at: 2025-11-17T16:30:00Z
+
+system_layers[3]{name,technology,purpose}:
+ Frontend,"React 18 + TypeScript, React Native + Expo",User interfaces (web + mobile)
+ Backend,"FastAPI + Python 3.11, SQLAlchemy 2.0",Business logic and API services
+ Data,"PostgreSQL 15, Redis 7",Persistent storage and caching
+
+core_services[8]{name,responsibility,priority}:
+ auth_service,User authentication and authorization with JWT,10
+ profile_service,User profile management and photo uploads,9
+ attachment_service,Attachment assessment and scoring,9
+ matching_service,Compatibility algorithm and match generation,8
+ messaging_service,Real-time chat between matches,7
+ ai_service,AI practice companions and coaching,6
+ payment_service,Subscriptions and microtransactions via Stripe,6
+ event_service,Virtual events and community features,5
+
+api_endpoints[20]{service,method,path,description}:
+ auth_service,POST,/api/auth/register,Create new user account
+ auth_service,POST,/api/auth/login,Login and get JWT token
+ auth_service,POST,/api/auth/logout,Invalidate session
+ auth_service,POST,/api/auth/refresh,Refresh JWT token
+ profile_service,GET,/api/profiles/{id},Get user profile
+ profile_service,PUT,/api/profiles/{id},Update profile
+ profile_service,POST,/api/profiles/{id}/photos,Upload photos
+ attachment_service,GET,/api/attachment/assessment,Get assessment questions
+ attachment_service,POST,/api/attachment/assessment,Submit assessment responses
+ attachment_service,GET,/api/attachment/results/{id},Get assessment results
+ matching_service,GET,/api/matches,Get daily matches
+ matching_service,POST,/api/matches/{id}/like,Like a match
+ matching_service,POST,/api/matches/{id}/pass,Pass on a match
+ messaging_service,GET,/api/messages,Get conversations
+ messaging_service,POST,/api/messages,Send message
+ ai_service,GET,/api/ai/companions,List AI practice companions
+ ai_service,POST,/api/ai/companions/{id}/chat,Chat with AI companion
+ payment_service,POST,/api/subscriptions,Create subscription
+ payment_service,PUT,/api/subscriptions/{id},Update subscription
+ event_service,GET,/api/events,List upcoming events
+
+database_schema[12]{table,key_fields,indexes}:
+ users,"id UUID PK, email UNIQUE, password_hash, subscription_tier","email, subscription_tier"
+ profiles,"user_id UUID FK, name, bio, photos JSON, location GEOGRAPHY","user_id, location"
+ attachment_assessments,"id UUID PK, user_id FK, anxiety_score, avoidance_score, style","user_id, style"
+ matches,"id UUID PK, user_a_id FK, user_b_id FK, compatibility_score, status","user_a_id, user_b_id, status"
+ messages,"id UUID PK, from_user_id FK, to_user_id FK, content, sent_at","from_user_id, to_user_id, sent_at"
+ ai_interactions,"id UUID PK, user_id FK, ai_type, disclosure_shown, created_at","user_id, ai_type"
+ subscriptions,"id UUID PK, user_id FK, tier, stripe_subscription_id, status","user_id, status"
+ payments,"id UUID PK, user_id FK, amount, type, stripe_payment_id","user_id, created_at"
+ events,"id UUID PK, title, type, start_time, capacity, price","type, start_time"
+ event_registrations,"id UUID PK, event_id FK, user_id FK, status","event_id, user_id"
+ consent_logs,"id UUID PK, user_id FK, consent_type, granted, timestamp","user_id, consent_type"
+ compliance_logs,"id UUID PK, user_id FK, action_type, metadata JSON, timestamp","user_id, action_type"
+
+ai_integration[3]{component,provider,purpose}:
+ LLM_Coaching,OpenAI GPT-4,AI practice companions and relationship coaching
+ Embeddings,sentence-transformers,Interest and value matching
+ Moderation,Perspective API + custom,Content safety and user protection
+
+infrastructure[8]{component,technology,purpose}:
+ Compute,AWS ECS Fargate,Containerized application hosting
+ Database,AWS RDS PostgreSQL Multi-AZ,Primary data store
+ Cache,AWS ElastiCache Redis,Session storage and caching
+ Storage,AWS S3 + CloudFront,Photo storage and CDN
+ Queue,Celery + Redis,Background job processing
+ Monitoring,DataDog + CloudWatch,Metrics and logging
+ CI_CD,GitHub Actions,Automated testing and deployment
+ IaC,Terraform,Infrastructure as code
+
+security_architecture:
+ authentication: JWT tokens with 15-min access + 7-day refresh
+ encryption: TLS 1.3 for transit, AES-256 for data at rest
+ secrets_management: AWS Secrets Manager
+ api_rate_limiting: 100 requests/min per user
+ photo_verification: AWS Rekognition for face detection
+ content_moderation: Perspective API + manual review queue
+
+compliance_architecture:
+ gdpr:
+  data_protection_officer: Required role
+  consent_management: Explicit opt-in for psychological data
+  data_export: Automated export API
+  data_deletion: 30-day retention policy
+  breach_notification: 72-hour automated alerting
+ eu_ai_act:
+  ai_labeling: 🤖 badge on all AI profiles
+  transparency_logs: All AI interactions logged
+  opt_out_mechanism: User settings for AI features
+  audit_trail: Quarterly compliance reports
+ california_sb_243:
+  disclosure_onboarding: AI disclosure on signup
+  opt_out_before_signup: Pre-registration opt-out
+  human_alternatives: All AI features optional
+
+data_flow:
+ user_onboarding: Registration → Email verification → Profile creation → Attachment assessment → Match generation
+ matching_algorithm: Daily cron → Fetch unmatched users → Calculate compatibility scores → Filter by preferences → Rank by score → Deliver top 5-10 matches
+ ai_interaction: User opts in → Select AI companion → Display disclosure → GPT-4 conversation → Log interaction → Provide coaching summary
+
+performance_targets:
+ api_response_p50_ms: 100
+ api_response_p95_ms: 200
+ api_response_p99_ms: 500
+ database_query_p95_ms: 50
+ match_generation_time_s: 60
+ concurrent_users: 10000
+ messages_per_second: 1000
+
+scalability_strategy:
+ horizontal_scaling: ECS tasks auto-scale based on CPU/memory
+ database_scaling: Read replicas for reporting queries
+ caching_strategy: Redis for session data and frequent queries
+ cdn_strategy: CloudFront for static assets and photos
+ async_processing: Celery for match generation and email notifications
+
+disaster_recovery:
+ rto_hours: 4
+ rpo_minutes: 15
+ backup_strategy: Daily automated snapshots + continuous replication
+ multi_region: Planned for Year 2
+ incident_response: Documented runbook with on-call rotation
+
+development_standards:
+ code_style: Black formatter, Google docstrings
+ type_checking: mypy strict mode
+ testing: pytest with 85%+ coverage
+ linting: ruff for Python, ESLint for TypeScript
+ security: bandit scans, dependency vulnerability checks
+ documentation: OpenAPI/Swagger for all endpoints
+
+deployment_pipeline:
+ environments[3]:
+  development (local Docker)
+  staging (auto-deploy from develop branch)
+  production (manual approval from main branch)
+ quality_gates[6]:
+  All tests passing
+  Coverage >= 85%
+  Security scans clean
+  Performance benchmarks met
+  Ethical audit passing
+  Code review approved (2 reviewers)
+
+monitoring_observability:
+ metrics[5]:
+  API response times by endpoint
+  Error rates and types
+  User engagement (DAU, MAU, retention)
+  Revenue metrics (MRR, conversions)
+  Match quality (conversation rate, date rate)
+ alerts[4]:
+  Error rate > 1% (page on-call)
+  API p95 > 500ms (Slack alert)
+  Payment failures > 5% (page + finance alert)
+  Database CPU > 80% (auto-scale + alert)
+ logs: Centralized logging with ELK stack
+
+service_dependencies:
+ auth_service: → database
+ profile_service: → auth_service, database, S3
+ attachment_service: → auth_service, database
+ matching_service: → profile_service, attachment_service, database, cache
+ messaging_service: → auth_service, database, Redis (real-time)
+ ai_service: → auth_service, OpenAI API, database
+ payment_service: → auth_service, Stripe API, database
+ event_service: → auth_service, database
+
+task_breakdown_summary:
+ phase_1_foundation: 8 tasks (authentication, profiles, infrastructure)
+ phase_2_matching: 5 tasks (attachment assessment, algorithm, match generation)
+ phase_3_ai_features: 4 tasks (AI companions, transparency, coaching)
+ phase_4_monetization: 4 tasks (subscriptions, microtransactions, events)
+ phase_5_compliance: 3 tasks (GDPR, EU AI Act, auditing)
+ total_tasks: 24
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T16:30:00Z
+ based_on: docs/dating-platform comprehensive specifications
+ reviewed_by: pending
+ approved: pending
+ next_step: Create detailed task files

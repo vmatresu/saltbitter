@@ -1,0 +1,86 @@
+task:
+ id: TASK-012
+ project: dating-platform
+ title: Implement content moderation system
+ type: backend
+ priority: 7
+ status: blocked
+
+description:
+ summary: Build multi-layer content moderation using Perspective API + manual review
+ details: |
+  Create moderation infrastructure:
+  - Perspective API integration for all text content
+  - Automated flagging of toxic messages
+  - Manual review queue for moderators
+  - Photo moderation using AWS Rekognition
+  - User reporting system
+  - Blocking and unblocking functionality
+  - Moderation dashboard for admin users
+  - Appeal process for moderation decisions
+  - Audit trail of all moderation actions
+
+acceptance_criteria[10]:
+ All messages screened via Perspective API before delivery
+ Messages scoring > 0.85 auto-blocked
+ Messages scoring 0.7-0.85 sent to review queue
+ Photos screened for inappropriate content via Rekognition
+ POST /api/reports creates moderation ticket
+ Moderators can approve/reject flagged content
+ Users can block/unblock other users
+ Blocked users cannot see each other or message
+ Appeal system allows users to contest decisions
+ All moderation actions logged for audit
+
+dependencies:
+ required[3]:
+  TASK-001
+  TASK-004
+  TASK-008
+ blocks[0]:
+
+context:
+ files_to_create[9]:
+  backend/services/moderation/main.py
+  backend/services/moderation/perspective.py
+  backend/services/moderation/rekognition.py
+  backend/services/moderation/review_queue.py
+  backend/services/moderation/reports.py
+  backend/services/moderation/blocks.py
+  backend/services/moderation/tests/test_moderation.py
+  backend/services/moderation/admin_dashboard.py
+  backend/database/models/moderation.py
+
+technical_details:
+ stack[4]:
+  FastAPI 0.104+
+  Perspective API (Google)
+  AWS Rekognition
+  SQLAlchemy 2.0
+ endpoints[8]:
+  POST /api/moderation/screen-text
+  POST /api/moderation/screen-photo
+  POST /api/reports
+  GET /api/moderation/queue (admin)
+  PUT /api/moderation/review/{id} (admin)
+  POST /api/blocks/{user_id}
+  DELETE /api/blocks/{user_id}
+  POST /api/moderation/appeal
+ moderation_thresholds:
+  auto_block: 0.85
+  manual_review: 0.70
+  pass_through: < 0.70
+
+moderation_attributes[6]:
+ TOXICITY
+ SEVERE_TOXICITY
+ IDENTITY_ATTACK
+ THREAT
+ SEXUALLY_EXPLICIT
+ PROFANITY
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:10:00Z
+ estimated_hours: 12
+ complexity: medium

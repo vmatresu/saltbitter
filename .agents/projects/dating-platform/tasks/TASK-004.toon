@@ -1,0 +1,94 @@
+task:
+ id: TASK-004
+ project: dating-platform
+ title: Create database schema with Alembic migrations
+ type: backend
+ priority: 10
+ status: blocked
+
+description:
+ summary: Set up PostgreSQL schema with Alembic for all 12 database tables
+ details: |
+  Create complete database schema:
+  - All 12 tables from architecture spec
+  - UUID primary keys for all tables
+  - Foreign key constraints with proper cascading
+  - Indexes for query optimization
+  - PostGIS extension for location data
+  - Alembic migrations for version control
+  - Seed data for development environment
+
+acceptance_criteria[12]:
+ users table created with proper constraints
+ profiles table with PostGIS geography type
+ attachment_assessments table with scoring fields
+ matches table with compatibility_score and status
+ messages table with timestamps and indexes
+ ai_interactions table with disclosure tracking
+ subscriptions table with Stripe integration fields
+ payments table for transaction history
+ events and event_registrations tables
+ consent_logs and compliance_logs for GDPR
+ All foreign keys with ON DELETE CASCADE where appropriate
+ Alembic migrations run successfully on all environments
+
+dependencies:
+ required[1]:
+  TASK-001
+ blocks[5]:
+  TASK-002
+  TASK-003
+  TASK-005
+  TASK-006
+  TASK-007
+
+context:
+ files_to_create[14]:
+  backend/database/alembic.ini
+  backend/database/alembic/env.py
+  backend/database/alembic/versions/001_initial_schema.py
+  backend/database/models/__init__.py
+  backend/database/models/user.py
+  backend/database/models/profile.py
+  backend/database/models/attachment.py
+  backend/database/models/match.py
+  backend/database/models/message.py
+  backend/database/models/ai_interaction.py
+  backend/database/models/subscription.py
+  backend/database/models/event.py
+  backend/database/models/compliance.py
+  backend/database/seed_data.py
+
+technical_details:
+ stack[3]:
+  PostgreSQL 15 with PostGIS extension
+  SQLAlchemy 2.0 ORM
+  Alembic for migrations
+ indexes_created[15]:
+  users.email (UNIQUE)
+  users.subscription_tier
+  profiles.user_id (UNIQUE FK)
+  profiles.location (GIST index for geography)
+  attachment_assessments.user_id
+  attachment_assessments.style
+  matches.user_a_id
+  matches.user_b_id
+  matches.status
+  messages.from_user_id
+  messages.to_user_id
+  messages.sent_at
+  subscriptions.user_id
+  consent_logs.user_id
+  compliance_logs.user_id
+
+schema_details:
+ uuid_version: UUID v4 for all primary keys
+ cascade_rules: ON DELETE CASCADE for user-owned data
+ jsonb_fields: profiles.photos, compliance_logs.metadata
+ geography_type: PostGIS GEOGRAPHY(POINT, 4326) for location
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T16:54:00Z
+ estimated_hours: 8
+ complexity: medium

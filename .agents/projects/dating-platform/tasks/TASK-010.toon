@@ -1,0 +1,82 @@
+task:
+ id: TASK-010
+ project: dating-platform
+ title: Implement AI transparency and disclosure system
+ type: backend
+ priority: 8
+ status: blocked
+
+description:
+ summary: Build comprehensive AI transparency system for EU AI Act + SB 243 compliance
+ details: |
+  Create transparency infrastructure:
+  - Disclosure modal shown before first AI interaction
+  - Transparency page explaining all AI usage
+  - Consent tracking in consent_logs table
+  - Opt-out mechanism in user settings
+  - AI interaction audit trail
+  - Quarterly compliance report generation
+  - Clear labeling of AI-generated content
+  - Human alternative options for all AI features
+  - Data retention policies for AI conversations
+
+acceptance_criteria[10]:
+ Disclosure modal shown before first AI companion chat
+ GET /api/transparency returns public AI usage explanation
+ Consent recorded in consent_logs with timestamp
+ Users can opt-out of AI features at any time
+ Opt-out disables all AI companions and coaching
+ All AI interactions logged with disclosure_shown flag
+ Quarterly compliance reports auto-generated
+ AI-generated coaching tips labeled with 🤖
+ Human alternatives clearly presented
+ GDPR data export includes all AI interaction data
+
+dependencies:
+ required[2]:
+  TASK-004
+  TASK-009
+ blocks[1]:
+  TASK-011
+
+context:
+ files_to_create[7]:
+  backend/services/compliance/transparency.py
+  backend/services/compliance/consent.py
+  backend/services/compliance/audit.py
+  backend/services/compliance/reports.py
+  backend/services/compliance/tests/test_transparency.py
+  frontend/components/AIDisclosureModal.tsx
+  frontend/pages/transparency.tsx
+
+technical_details:
+ stack[3]:
+  FastAPI 0.104+
+  React 18 + TypeScript
+  SQLAlchemy 2.0
+ endpoints[5]:
+  GET /api/transparency
+  POST /api/consent/ai-features
+  GET /api/consent/status
+  PUT /api/settings/ai-opt-out
+  GET /api/compliance/audit-logs
+ compliance_tables[2]:
+  consent_logs (id, user_id, consent_type, granted, timestamp)
+  compliance_logs (id, user_id, action_type, metadata JSON, timestamp)
+
+regulatory_requirements:
+ eu_ai_act[4]:
+  Article 52: AI system transparency
+  Clear labeling: 🤖 badge on all AI content
+  Audit trail: All interactions logged
+  Quarterly reports: Automated compliance reporting
+ california_sb_243[3]:
+  Disclosure: Before first interaction
+  Opt-out: Available pre and post signup
+  Human alternatives: All AI features optional
+
+metadata:
+ created_by: architect-agent
+ created_at: 2025-11-17T17:06:00Z
+ estimated_hours: 10
+ complexity: medium
