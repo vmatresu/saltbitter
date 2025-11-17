@@ -22,6 +22,7 @@ class Base(DeclarativeBase):
 
 # Import all models to ensure they are registered with Base metadata
 from .user import User  # noqa: E402, F401
+from .refresh_token import RefreshToken  # noqa: E402, F401
 from .profile import Profile  # noqa: E402, F401
 from .attachment import AttachmentAssessment  # noqa: E402, F401
 from .match import Match  # noqa: E402, F401
@@ -35,6 +36,7 @@ from .compliance import ConsentLog, ComplianceLog  # noqa: E402, F401
 __all__ = [
     "Base",
     "User",
+    "RefreshToken",
     "Profile",
     "AttachmentAssessment",
     "Match",
