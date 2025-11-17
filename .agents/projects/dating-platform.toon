@@ -1,0 +1,209 @@
+project:
+ id: dating-platform
+ collection: SaltBitter Apps
+ name: SaltBitter Dating Platform
+ tagline: Psychology-Informed Ethical Dating
+ version: 1.0.0
+ status: planning_complete
+
+mission:
+ primary: Build ethical psychology-informed dating platform prioritizing user well-being
+ approach: Attachment theory matching + transparent AI + no dark patterns
+ north_star_metric: 22% 6-month relationship rate (vs 8-12% industry)
+
+market_opportunity:
+ market_size_usd: 5.6B
+ growth_rate_cagr: 20%
+ target_year_1_users: 144500
+ target_year_1_arr_usd: 2.3M
+
+business_goals[5]:
+ Create attachment theory-based matching system (40% algorithm weight)
+ Implement transparent AI with EU AI Act + SB 243 compliance
+ Build ethical monetization without pay-to-win mechanics
+ Achieve 10.3% premium conversion rate (vs 3-8% industry)
+ Reach profitability by Month 16
+
+core_differentiators[4]:
+ Attachment theory matching (only platform using this approach)
+ Transparent AI with clear labeling and opt-outs
+ Ethical monetization with fair free tier
+ Psychology-first features and mental health resources
+
+user_stories[15]{id,role,action,benefit,priority}:
+ US-001,user,complete attachment assessment,understand my attachment style and get better matches,10
+ US-002,user,register and create profile,start using the platform,10
+ US-003,user,receive quality matches,find compatible partners based on psychology,9
+ US-004,user,see AI practice companions clearly labeled,practice conversations safely,8
+ US-005,user,opt-out of AI features,maintain full control over my experience,8
+ US-006,premium_user,get unlimited matches,see more potential partners,7
+ US-007,user,export my data,exercise GDPR rights,9
+ US-008,user,chat with matches,build connections before meeting,8
+ US-009,user,schedule in-app video calls,verify matches safely,7
+ US-010,premium_user,get communication coaching,improve my dating skills,6
+ US-011,user,attend virtual events,meet people in group settings,5
+ US-012,elite_user,access AI relationship coaching,get personalized guidance,5
+ US-013,user,report inappropriate behavior,feel safe on the platform,9
+ US-014,user,understand how matching works,trust the algorithm,8
+ US-015,admin,review compliance logs,ensure regulatory adherence,10
+
+technical_constraints:
+ compliance_required[4]:
+  EU AI Act Article 52 (AI transparency)
+  GDPR Article 9 (special category data - psychological assessment)
+  California SB 243 (AI disclosure and opt-out)
+  CCPA (California privacy rights)
+ stack:
+  backend: FastAPI + Python 3.11+
+  frontend: React 18 + TypeScript
+  mobile: React Native + Expo
+  database: PostgreSQL 15 + Redis 7
+  ai_services: OpenAI GPT-4 + custom NLP
+  infrastructure: AWS (ECS Fargate, RDS, S3, CloudFront)
+ performance:
+  api_response_p95_ms: 200
+  test_coverage_backend_percent: 85
+  test_coverage_frontend_percent: 70
+ security:
+  encryption: End-to-end for messages
+  authentication: JWT with refresh tokens
+  data_retention: GDPR-compliant deletion
+  vulnerability_scanning: Automated (Bandit, npm audit)
+
+revenue_model:
+ tiers[3]{name,price_usd_monthly,key_features}:
+  Free,0.00,"5-10 quality matches/day, unlimited AI practice, basic filters"
+  Premium,12.99,"Unlimited matches, advanced filters, communication insights, priority support"
+  Elite,29.99,"AI relationship coaching, exclusive events, profile boost, detailed analytics"
+ microtransactions[4]{item,price_usd,description}:
+  Profile Boost,4.99,Featured placement for 24h
+  Super Like,1.99,Stand out to potential match
+  AI Icebreaker,2.99,Personalized conversation starter
+  Event Ticket,15.00,Access to premium virtual events
+ target_conversion_rate_percent: 10.3
+ target_ltv_usd: 32.50
+ target_cac_usd: 2.80
+ target_ltv_cac_ratio: 11.6
+
+quality_standards:
+ code_coverage_min_percent: 85
+ required_checks[6]:
+  All tests passing (pytest, jest)
+  Linting clean (ruff, ESLint)
+  Type checking clean (mypy, TypeScript)
+  Security scan passing (bandit, npm audit)
+  Ethical audit score >= 85/100
+  API performance < 200ms p95
+ development_practices:
+  version_control: Git with feature branches
+  code_review: 2 approvals required
+  testing: Unit + Integration + E2E
+  ci_cd: GitHub Actions
+  iac: Terraform
+
+success_metrics[8]{metric,month_1,month_6,month_12,target}:
+ Active Users,500,38600,144500,100000
+ Conversion Rate %,3.0,7.6,10.3,10.0
+ Monthly Churn %,15.0,7.0,4.7,5.0
+ MRR USD,228,36000,189000,150000
+ CAC USD,5.50,3.20,2.80,3.00
+ LTV USD,8.80,18.60,32.50,30.00
+ Match to Date %,20,30,35,30
+ 6-Month Relationship %,10,18,22,20
+
+compliance_requirements:
+ gdpr:
+  data_protection_officer: Required
+  consent_mechanism: Explicit opt-in for psychological data
+  data_export: Automated user data export
+  data_deletion: 30-day retention after account closure
+  breach_notification: 72 hours to authorities
+ eu_ai_act:
+  ai_disclosure: All AI profiles clearly labeled with 🤖 badge
+  opt_out_mechanism: Users can disable all AI features
+  transparency_page: Public explanation of AI usage
+  audit_logs: All AI interactions logged
+ california_sb_243:
+  ai_disclosure_onboarding: Clear disclosure during signup
+  opt_out_available: Users can opt out before and after signup
+  human_alternatives: All AI features have human equivalents
+ ccpa:
+  privacy_policy: Clear, accessible
+  data_sale_opt_out: We don't sell data (explicit statement)
+  data_requests: Automated fulfillment within 45 days
+
+implementation_phases:
+ phase_1_foundation:
+  duration_months: 2
+  deliverables[4]:
+   AWS infrastructure with Terraform
+   User registration and authentication
+   Profile creation and photo upload
+   Attachment assessment (25 questions)
+ phase_2_ai_features:
+  duration_months: 2
+  deliverables[4]:
+   AI practice companions with GPT-4
+   AI transparency disclosures
+   Communication coaching (premium)
+   EU AI Act + SB 243 compliance
+ phase_3_monetization:
+  duration_months: 2
+  deliverables[4]:
+   Stripe subscription system
+   Microtransactions (boosts, super likes)
+   Events platform
+   Conversion optimization
+ phase_4_growth:
+  duration_months: 6
+  deliverables[4]:
+   Marketing and acquisition campaigns
+   Community features (forums, events)
+   Video dating
+   Break-even achievement
+
+risks_and_mitigations:
+ critical_risks[4]{risk,impact,mitigation}:
+  EU AI Act penalties (€35M),Catastrophic,Quarterly compliance audits + legal review + DPO
+  Data breach (psychological data),Catastrophic,End-to-end encryption + penetration testing + incident response
+  Low conversion (<7%),High,Aggressive A/B testing + flexible pricing experiments
+  Competitor copies features,Medium,Deepen moat with therapist network + community events
+
+team_requirements:
+ initial_team[9]{role,fte,start_month}:
+  Backend Engineer,2.0,1
+  Frontend Engineer,1.0,1
+  DevOps Engineer,0.5,1
+  Product Designer,1.0,1
+  Growth Marketer,1.0,1
+  Clinical Psychologist,1.0,1
+  UX Researcher,0.5,1
+  Content Creator,0.5,1
+  Data Protection Officer,1.0,1
+
+funding:
+ seed_round_usd: 2500000
+ runway_months: 18
+ allocation[5]{category,percent,amount_usd}:
+  Engineering & Product,40,1000000
+  Marketing & Growth,30,750000
+  Operations,15,375000
+  Legal & Compliance,10,250000
+  Reserve,5,125000
+
+documentation_references[8]:
+ docs/dating-platform/README.md
+ docs/dating-platform/EXECUTIVE-SUMMARY.md
+ docs/dating-platform/01-AI-TRANSPARENCY-FLOWS.md
+ docs/dating-platform/02-ATTACHMENT-ASSESSMENT.md
+ docs/dating-platform/03-MATCHING-ALGORITHM.md
+ docs/dating-platform/04-PREMIUM-TIERS-MONETIZATION.md
+ docs/dating-platform/05-COMPLIANCE-CHECKLIST.md
+ docs/dating-platform/06-REVENUE-PROJECTIONS.md
+
+metadata:
+ created_at: 2025-11-17T16:00:00Z
+ created_by: product-owner-agent
+ based_on: Comprehensive design documentation in docs/dating-platform
+ next_step: architect-agent-task-breakdown
+ status: ready_for_architecture
