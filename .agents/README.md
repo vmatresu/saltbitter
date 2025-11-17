@@ -18,6 +18,84 @@ Product Owner Agent → Architect Agent → Software Engineer Agents → Complet
 - TOON files for state
 - Bash helpers for atomic operations (optional - agents can do Git directly)
 
+## Branching Strategy (Production Best Practice)
+
+**Git-Flow Model** for multi-agent coordination:
+
+```
+main (production)     ← Stable, reviewed code only
+  ↑
+  PR (after review)
+  ↑
+develop (coordination) ← Agents claim tasks & coordinate here
+  ↑
+  PR (after implementation)
+  ↑
+feature/TASK-XXX      ← Individual agent implementation
+```
+
+### Branch Purposes
+
+**`main`**: Production-ready code only
+- Protected branch (requires PR approval)
+- Only updated via PRs from `develop`
+- Represents stable, reviewed, deployable code
+- Tagged for releases
+
+**`develop`**: Agent coordination branch
+- **Task claiming happens here** (atomic Git operations)
+- Task completion recorded here
+- Integration of all feature branches
+- Always in a working state
+
+**`feature/TASK-XXX`**: Individual task implementation
+- Created from `develop`
+- Agent implements specific task
+- PR created: `feature/TASK-XXX` → `develop`
+- Deleted after merge
+
+### Agent Workflow
+
+1. **Claim Task** (on `develop`):
+   ```bash
+   ./agents/scripts/claim-task.sh agent-123
+   # Commits to develop, pushes immediately (atomic claim)
+   ```
+
+2. **Implement** (on feature branch):
+   ```bash
+   git checkout -b feature/TASK-001-docker-setup
+   # ... implement code ...
+   git commit -m "[TASK-001] Implement Docker environment"
+   git push origin feature/TASK-001-docker-setup
+   ```
+
+3. **Create PR** (`feature/TASK-XXX` → `develop`):
+   - Automated CI/CD runs tests
+   - Code review (optional, can be automated)
+   - Merge to `develop` after approval
+
+4. **Complete Task** (on `develop`):
+   ```bash
+   ./agents/scripts/complete-task.sh TASK-001 agent-123 <pr-url>
+   # Marks task complete, unblocks dependencies
+   ```
+
+5. **Release** (`develop` → `main`):
+   - Periodic releases (daily, weekly, or per milestone)
+   - Create PR: `develop` → `main`
+   - Final review and approval
+   - Tag release on `main`
+
+### Why This Approach?
+
+✅ **Race-condition free**: Git's atomic push ensures only one agent claims a task
+✅ **Code review**: All code reviewed before reaching `main`
+✅ **Rollback safety**: `main` always stable, easy to rollback
+✅ **Parallel work**: Multiple agents work on separate features simultaneously
+✅ **Clear history**: Easy to see what was done and when
+✅ **Production-ready**: Industry-standard Git-Flow pattern
+
 ## Agent Roles
 
 ### 1. Product Owner Agent

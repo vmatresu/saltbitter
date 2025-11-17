@@ -1,6 +1,8 @@
 #!/bin/bash
 # Mark a task as completed and move to completed/
-# Usage: ./complete-task.sh <task-id> <agent-id> [pr-url] [project-id]
+# Usage: ./complete-task.sh <task-id> <agent-id> [pr-url] [project-id] [branch]
+#
+# Best Practice: Agents work on 'develop' branch for coordination
 
 set -e
 
@@ -8,6 +10,7 @@ TASK_ID="$1"
 AGENT_ID="$2"
 PR_URL="${3:-}"
 PROJECT="${4:-dating-platform}"
+BRANCH="${5:-develop}"  # Default to develop branch
 
 if [ -z "$TASK_ID" ] || [ -z "$AGENT_ID" ]; then
     echo "Usage: $0 <task-id> <agent-id> [pr-url] [project-id]" >&2
@@ -49,11 +52,12 @@ if [ -n "$PR_URL" ]; then
 fi
 
 # Commit and push
-git pull --rebase origin main --quiet 2>/dev/null || true
+git checkout "$BRANCH" 2>/dev/null || true
+git pull --rebase origin "$BRANCH" --quiet 2>/dev/null || true
 git add ".agents/completed/$PROJECT/$TASK_ID.toon" ".agents/claimed/$PROJECT/" 2>/dev/null || true
 git commit -m "[AGENT-COMPLETE] $AGENT_ID completed $PROJECT/$TASK_ID" --quiet
 
-if git push origin main --quiet 2>/dev/null; then
+if git push origin "$BRANCH" --quiet 2>/dev/null; then
     echo "✓ Task $PROJECT/$TASK_ID marked as completed at $COMPLETED_AT" >&2
 
     # Check if this completion unblocks any tasks
@@ -90,7 +94,7 @@ if git push origin main --quiet 2>/dev/null; then
     if [ $UNBLOCKED -gt 0 ]; then
         git add .agents/projects/$PROJECT/tasks/
         git commit -m "[AUTO] Unblocked $UNBLOCKED tasks after completing $TASK_ID" --quiet
-        git push origin main --quiet 2>/dev/null || true
+        git push origin "$BRANCH" --quiet 2>/dev/null || true
         echo "✓ Unblocked $UNBLOCKED tasks" >&2
     fi
 

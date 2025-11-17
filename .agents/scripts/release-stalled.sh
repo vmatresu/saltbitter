@@ -1,10 +1,13 @@
 #!/bin/bash
 # Release tasks that have been claimed but show no heartbeat activity
-# Usage: ./release-stalled.sh [timeout-minutes]
+# Usage: ./release-stalled.sh [timeout-minutes] [branch]
+#
+# Best Practice: Agents work on 'develop' branch for coordination
 
 set -e
 
 TIMEOUT_MINUTES="${1:-30}"
+BRANCH="${2:-develop}"  # Default to develop branch
 
 # Calculate cutoff time (macOS and Linux compatible)
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -67,11 +70,12 @@ for project_dir in .agents/claimed/*/; do
 done
 
 if [ $RELEASED -gt 0 ]; then
-    git pull --rebase origin main --quiet 2>/dev/null || true
+    git checkout "$BRANCH" 2>/dev/null || true
+    git pull --rebase origin "$BRANCH" --quiet 2>/dev/null || true
     git add .agents/projects/ .agents/claimed/ 2>/dev/null || true
     git commit -m "[ORCHESTRATOR] Released $RELEASED stalled tasks (no heartbeat for ${TIMEOUT_MINUTES}m)" --quiet
 
-    if git push origin main --quiet 2>/dev/null; then
+    if git push origin "$BRANCH" --quiet 2>/dev/null; then
         echo "✓ Released $RELEASED stalled tasks" >&2
     else
         echo "⚠ Warning: Could not push release (someone else may have released them)" >&2
