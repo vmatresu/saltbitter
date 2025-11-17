@@ -43,6 +43,11 @@ class User(Base):
     )
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Relationships
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+        "RefreshToken", back_populates="user", cascade="all, delete-orphan"
+    )
+
     def __repr__(self) -> str:
         """String representation of User."""
         return f"<User(id={self.id}, email={self.email}, tier={self.subscription_tier})>"

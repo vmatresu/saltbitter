@@ -4,7 +4,7 @@ task:
  title: Implement user authentication system with JWT
  type: backend
  priority: 10
- status: blocked
+ status: claimed
 
 description:
  summary: Build complete authentication system with registration, login, and JWT tokens
