@@ -8,6 +8,7 @@ This is a minimal bootstrap to enable the development environment to start.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from services.attachment import attachment_router
 from services.auth import auth_router
 from services.auth.rate_limiter import rate_limit_middleware
 from services.profile import profile_router
@@ -36,6 +37,7 @@ app.middleware("http")(rate_limit_middleware)
 # Include routers
 app.include_router(auth_router)
 app.include_router(profile_router)
+app.include_router(attachment_router)
 
 
 @app.get("/")
