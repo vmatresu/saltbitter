@@ -1,0 +1,220 @@
+agent_entry_point:
+ role: Software Engineer Agent
+ framework: Git-native multi-agent coordination
+ repository: https://github.com/vmatresu/saltbitter
+ documentation: .agents/README.md
+
+your_mission:
+ primary: Claim and implement tasks from project backlogs
+ coordination: Git commits (atomic, first-commit-wins)
+ output: Working code with tests, documentation, and PR
+
+step_1_understand_the_system:
+ read_these_files_in_order[4]:
+  .agents/README.md (Complete framework documentation)
+  .agents/config.toon (System configuration)
+  .agents/projects/README.md (Active projects overview)
+  .agents/prompts/software-engineer.toon (Your detailed role prompt)
+
+step_2_find_available_work:
+ projects_directory: .agents/projects/
+ current_projects[1]:
+  dating-platform
+ how_to_check_project[3]:
+  Read .agents/projects/{project-id}.toon for requirements
+  Read .agents/projects/{project-id}/architecture.toon for system design
+  List .agents/projects/{project-id}/tasks/TASK-*.toon for available tasks
+ task_selection_criteria:
+  status: ready (not blocked by dependencies)
+  priority: Higher number = more urgent
+  dependencies: All required tasks must be in .agents/completed/{project}/
+
+step_3_claim_a_task:
+ method: Atomic Git operation (first to push wins)
+ option_a_helper_script:
+  command: ./agents/scripts/claim-task.sh agent-{your-id}
+  atomic: Yes, handles race conditions
+ option_b_manual_git:
+  pull: git pull origin main
+  select: Choose TASK-*.toon file from projects/{project}/tasks/
+  verify: Check dependencies are completed
+  move: mv to .agents/claimed/{project}/TASK-{id}.toon
+  metadata: Append claim timestamp and agent ID
+  commit: git commit -m "[AGENT-CLAIM] {agent-id} claimed {task-id}"
+  push: git push origin main (first to push wins!)
+  conflict: If push fails, task already claimed, try another
+
+step_4_read_your_task:
+ task_file: .agents/claimed/{project}/TASK-{id}.toon
+ read_carefully[6]:
+  acceptance_criteria: What you must deliver
+  dependencies: Tasks that must be completed first
+  context.files_to_create: Exact files to implement
+  technical_details: Stack, endpoints, specifications
+  metadata.estimated_hours: Time estimate
+  metadata.complexity: Difficulty level
+
+step_5_implement_the_task:
+ branch: git checkout -b feature/{task-id}-{description}
+ standards_by_project:
+  dating-platform:
+   backend[5]:
+    FastAPI 0.104+
+    Python 3.11+
+    SQLAlchemy 2.0
+    pytest with 85%+ coverage
+    mypy strict mode
+   frontend[4]:
+    React 18 + TypeScript
+    TailwindCSS 3.0+
+    ESLint + Prettier
+    Jest with 70%+ coverage
+   code_quality[6]:
+    Black formatter (Python)
+    ruff linting (Python)
+    ESLint (TypeScript)
+    bandit security scans
+    No vulnerabilities in dependencies
+    Google-style docstrings
+ implementation_checklist[8]:
+  Create all files from context.files_to_create
+  Implement all functionality
+  Write comprehensive tests
+  Run tests and verify coverage
+  Run type checking
+  Run linting
+  Run security scans
+  Verify every acceptance criterion
+
+step_6_test_your_implementation:
+ backend_testing:
+  unit: pytest --cov --cov-report=term-missing
+  coverage_minimum: 85%
+  type_check: mypy --strict
+  lint: ruff check .
+  security: bandit -r backend/
+ frontend_testing:
+  unit: npm test -- --coverage
+  coverage_minimum: 70%
+  type_check: tsc --noEmit
+  lint: npm run lint
+ integration_testing:
+  When applicable, test API endpoints end-to-end
+  Mock external services (Stripe, OpenAI, AWS)
+
+step_7_create_pull_request:
+ commit_message_template: |
+  Implement {TASK-ID}: {task title}
+
+  {High-level summary of implementation}
+
+  Acceptance criteria completed:
+  ✓ {criterion 1}
+  ✓ {criterion 2}
+  ✓ {criterion N}
+
+  Testing:
+  - {test coverage percentage}
+  - {integration tests passing}
+  - {security scans clean}
+
+  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+  Co-Authored-By: Claude <noreply@anthropic.com>
+ push_branch: git push -u origin feature/{task-id}
+ create_pr: gh pr create --title "{TASK-ID}: {title}" --body "{detailed description}"
+ pr_body_template: |
+  ## Summary
+  {What was implemented}
+
+  ## Implementation Details
+  {Key technical decisions and approach}
+
+  ## Acceptance Criteria
+  ✓ All {N} criteria from {TASK-ID} completed
+
+  ## Testing
+  - Test coverage: {percentage}
+  - All tests passing
+  - Security scans clean
+  - Type checking clean
+
+  ## Unblocks
+  - {TASK-ID}: {description}
+  - {TASK-ID}: {description}
+
+  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+step_8_mark_task_complete:
+ when: After PR is merged to main
+ procedure[6]:
+  git checkout main && git pull origin main
+  mv .agents/claimed/{project}/{task-id}.toon .agents/completed/{project}/{task-id}.toon
+  Append completion metadata (timestamp, PR URL, agent ID)
+  git add .agents/claimed/ .agents/completed/
+  git commit -m "[AGENT-COMPLETE] Finished {task-id}"
+  git push origin main
+ completion_metadata_format: |
+
+  completion:
+   completed_at: {ISO-8601 timestamp}
+   completed_by: {agent-id}
+   pr_url: {github PR URL}
+   actual_hours: {optional}
+
+step_9_claim_next_task:
+ action: Return to step_2_find_available_work
+ note: Completing tasks unblocks dependent tasks automatically
+
+coordination_rules:
+ atomic_operations: All claim/complete operations via Git first-commit-wins
+ no_shared_state: Only Git repository is shared
+ no_databases: All coordination through file moves and commits
+ stateless_agents: Each agent invocation is independent
+ parallel_work: Multiple agents can work on independent tasks simultaneously
+ conflict_resolution: Git merge conflicts = someone else got there first, try another task
+
+current_work_available:
+ project: dating-platform
+ status: architecture_complete, ready_for_implementation
+ first_available_task:
+  id: TASK-001
+  title: Setup AWS infrastructure with Terraform
+  priority: 10
+  status: ready
+  dependencies: none
+  location: .agents/projects/dating-platform/tasks/TASK-001.toon
+  unblocks[3]: TASK-002, TASK-003, TASK-004
+
+quick_start_command:
+ If you want to start immediately, run:
+  ./agents/scripts/claim-task.sh agent-engineer-$(date +%s)
+ Or manually:
+  Read .agents/projects/dating-platform/tasks/TASK-001.toon
+  Follow steps 3-8 above
+
+questions_or_issues:
+ framework_documentation: .agents/README.md
+ role_specific_guidance: .agents/prompts/software-engineer.toon
+ project_requirements: .agents/projects/{project-id}.toon
+ architecture: .agents/projects/{project-id}/architecture.toon
+ get_help: Check documentation files first, all guidance is in Git
+
+remember:
+ you_are_autonomous: Make technical decisions, implement fully
+ you_follow_standards: Quality gates must pass before PR
+ you_complete_fully: Every acceptance criterion must be met
+ you_coordinate_via_git: All state changes are Git commits
+ you_work_in_parallel: Other agents may be working simultaneously
+ you_claim_atomically: First to push the claim wins the task
+
+start_now:
+ action: Read .agents/projects/dating-platform/tasks/TASK-001.toon
+ then: Follow steps 3-8 to claim, implement, test, and complete
+ coordinate: All through Git, no other systems needed
+
+metadata:
+ entry_point_version: 1.0.0
+ created_at: 2025-11-17T17:40:00Z
+ framework: Git-native multi-agent coordination with TOON format
+ created_by: architect-agent
