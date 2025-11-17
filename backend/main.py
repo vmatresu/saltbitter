@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from services.attachment import attachment_router
 from services.auth import auth_router
 from services.auth.rate_limiter import rate_limit_middleware
+from services.compliance import compliance_router
 from services.profile import profile_router
 
 # Create FastAPI application
@@ -38,6 +39,7 @@ app.middleware("http")(rate_limit_middleware)
 app.include_router(auth_router)
 app.include_router(profile_router)
 app.include_router(attachment_router)
+app.include_router(compliance_router)
 
 
 @app.get("/")
