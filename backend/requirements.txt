@@ -38,3 +38,10 @@ sqlalchemy[mypy]==2.0.23
 
 # Pydantic
 pydantic[email]==2.5.0
+
+# AWS SDK
+boto3==1.29.7
+botocore==1.32.7
+
+# Image Processing
+Pillow==10.1.0
