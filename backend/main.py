@@ -8,6 +8,9 @@ This is a minimal bootstrap to enable the development environment to start.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from services.auth import auth_router
+from services.auth.rate_limiter import rate_limit_middleware
+
 # Create FastAPI application
 app = FastAPI(
     title="SaltBitter API",
@@ -25,6 +28,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add rate limiting middleware
+app.middleware("http")(rate_limit_middleware)
+
+# Include routers
+app.include_router(auth_router)
 
 
 @app.get("/")
