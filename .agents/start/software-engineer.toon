@@ -37,7 +37,8 @@ step_3_claim_a_task:
   atomic: Yes, handles race conditions automatically
   branch: Claims on develop branch by default
  option_b_manual_git:
-  checkout: git checkout develop
+  fetch: git fetch origin (get latest branches)
+  checkout: git checkout develop || git checkout -b develop origin/develop
   pull: git pull origin develop
   select: Choose TASK-*.toon file from projects/{project}/tasks/
   verify: Check dependencies are completed
@@ -46,6 +47,7 @@ step_3_claim_a_task:
   commit: git commit -m "[AGENT-CLAIM] {agent-id} claimed {task-id}"
   push: git push origin develop (first to push wins!)
   conflict: If push fails, task already claimed, try another
+  note: If develop doesn't exist locally, the checkout creates it from origin
 
 step_4_read_your_task:
  task_file: .agents/claimed/{project}/TASK-{id}.toon

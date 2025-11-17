@@ -49,8 +49,18 @@ TASK_ID=$(basename "$TASK_FILE" .toon)
 
 echo "Attempting to claim $TASK_ID from $TASK_PROJECT project (priority: $MAX_PRIORITY) on branch $BRANCH" >&2
 
-# Ensure we're on the correct branch
-git checkout "$BRANCH" 2>/dev/null || git checkout -b "$BRANCH"
+# Fetch latest branches from origin
+git fetch origin "$BRANCH" 2>/dev/null || true
+
+# Ensure we're on the correct branch (create from origin if doesn't exist)
+if git checkout "$BRANCH" 2>/dev/null; then
+    echo "Switched to existing branch $BRANCH" >&2
+elif git checkout -b "$BRANCH" "origin/$BRANCH" 2>/dev/null; then
+    echo "Created branch $BRANCH from origin/$BRANCH" >&2
+else
+    git checkout -b "$BRANCH"
+    echo "Created new branch $BRANCH" >&2
+fi
 
 # Atomic claim via git commit
 git pull --rebase origin "$BRANCH" 2>/dev/null || true
