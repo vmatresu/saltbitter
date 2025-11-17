@@ -175,7 +175,8 @@ task_breakdown_summary:
  phase_3_ai_features: 4 tasks (AI companions, transparency, coaching)
  phase_4_monetization: 4 tasks (subscriptions, microtransactions, events)
  phase_5_compliance: 3 tasks (GDPR, EU AI Act, auditing)
- total_tasks: 24
+ phase_6_operations: 1 task (documentation and runbooks)
+ total_tasks: 25
 
 metadata:
  created_by: architect-agent

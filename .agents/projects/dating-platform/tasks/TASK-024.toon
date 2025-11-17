@@ -1,27 +1,30 @@
 task:
  id: TASK-024
  project: dating-platform
- title: Create comprehensive documentation and runbooks
+ title: Create technical documentation and operational runbooks
  type: documentation
  priority: 5
  status: blocked
 
 description:
- summary: Write complete technical documentation and operational runbooks
+ summary: Write technical implementation docs and operational runbooks
  details: |
-  Create documentation suite:
-  - API documentation with OpenAPI/Swagger
-  - Architecture decision records (ADRs)
-  - Database schema documentation
-  - Deployment runbooks
-  - Incident response procedures
-  - Monitoring and alerting guide
-  - Security best practices
-  - GDPR compliance procedures
+  Create technical documentation suite:
+  - API documentation with OpenAPI/Swagger (auto-generated from FastAPI)
+  - Architecture decision records (ADRs) documenting technical choices
+  - Database schema documentation with ER diagrams
+  - Deployment runbooks for staging and production
+  - Incident response procedures and escalation paths
+  - Monitoring and alerting guide with threshold documentation
+  - Security best practices and code review checklist
+  - GDPR compliance operational procedures
   - Onboarding guide for new engineers
-  - Code contribution guidelines
+  - Code contribution guidelines (CONTRIBUTING.md)
   - Testing strategy documentation
-  - Disaster recovery procedures
+  - Disaster recovery procedures and runbooks
+
+  NOTE: Product specifications already exist in docs/dating-platform/
+  This task focuses on TECHNICAL and OPERATIONAL documentation only.
 
 acceptance_criteria[12]:
  OpenAPI spec auto-generated from FastAPI

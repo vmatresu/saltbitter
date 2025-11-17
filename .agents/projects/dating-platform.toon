@@ -207,6 +207,6 @@ metadata:
  based_on: Comprehensive design documentation in docs/dating-platform
  architecture_completed_at: 2025-11-17T17:35:00Z
  architecture_completed_by: architect-agent
- total_tasks: 24
+ total_tasks: 25
  next_step: software-engineer-agents-claim-tasks
  status: ready_for_implementation
