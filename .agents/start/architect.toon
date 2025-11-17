@@ -89,7 +89,12 @@ step_5_create_task_files:
   Verify estimated hours sum to reasonable project timeline
 
 step_6_commit_architecture_and_tasks:
- branch: git checkout -b architecture/{project-id}
+ branch_strategy: Work on develop branch (agent coordination branch)
+ workflow: |
+  1. Ensure on develop branch: git checkout develop
+  2. Pull latest: git pull origin develop
+  3. Commit architecture and tasks
+  4. Push to develop: git push origin develop
  commit_message_template: |
   [ARCHITECT] Complete {project name} architecture and task breakdown
 
@@ -112,12 +117,13 @@ step_6_commit_architecture_and_tasks:
   - File creation lists
   - Technical specifications
 
-  Ready for Software Engineer agents to claim and implement.
+  Ready for Software Engineer agents to claim and implement on develop branch.
+  Tasks will be claimed via ./agents/scripts/claim-task.sh
 
   🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
   Co-Authored-By: Claude <noreply@anthropic.com>
- push_and_pr: Create PR for architecture review
+ merge_to_main: Architecture updates merged to main via PR after completion
 
 step_7_update_project_status:
  file: .agents/projects/{project-id}.toon

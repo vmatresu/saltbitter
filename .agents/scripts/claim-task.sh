@@ -1,11 +1,15 @@
 #!/bin/bash
 # Atomically claim a task using Git's first-commit-wins mechanism
-# Usage: ./claim-task.sh <agent-id> [project-id]
+# Usage: ./claim-task.sh <agent-id> [project-id] [branch]
+#
+# Best Practice: Agents work on 'develop' branch for coordination
+# Production code is merged to 'main' only after review
 
 set -e
 
 AGENT_ID="${1:-agent-$(date +%s)-$RANDOM}"
 PROJECT="${2:-dating-platform}"  # Default to dating-platform
+BRANCH="${3:-develop}"  # Default to develop branch for agent coordination
 TASK_FILE=""
 TASK_PROJECT=""
 
@@ -43,10 +47,13 @@ fi
 
 TASK_ID=$(basename "$TASK_FILE" .toon)
 
-echo "Attempting to claim $TASK_ID from $TASK_PROJECT project (priority: $MAX_PRIORITY)" >&2
+echo "Attempting to claim $TASK_ID from $TASK_PROJECT project (priority: $MAX_PRIORITY) on branch $BRANCH" >&2
+
+# Ensure we're on the correct branch
+git checkout "$BRANCH" 2>/dev/null || git checkout -b "$BRANCH"
 
 # Atomic claim via git commit
-git pull --rebase origin main 2>/dev/null || true
+git pull --rebase origin "$BRANCH" 2>/dev/null || true
 
 # Check if task still exists after pull
 if [ ! -f "$TASK_FILE" ]; then
@@ -77,14 +84,14 @@ git add ".agents/claimed/$TASK_PROJECT/$TASK_ID.toon" ".agents/projects/$TASK_PR
 git commit -m "[AGENT-CLAIM] $AGENT_ID claimed $TASK_ID from $TASK_PROJECT" --quiet
 
 # First to push wins - this is the atomic operation
-if git push origin main --quiet 2>/dev/null; then
-    echo "SUCCESS: Claimed $TASK_ID" >&2
+if git push origin "$BRANCH" --quiet 2>/dev/null; then
+    echo "SUCCESS: Claimed $TASK_ID on branch $BRANCH" >&2
     echo "$TASK_PROJECT/$TASK_ID"
     exit 0
 else
     # Someone else got it first, rollback
     git reset --hard HEAD~1 --quiet
-    git pull --rebase origin main --quiet 2>/dev/null || true
+    git pull --rebase origin "$BRANCH" --quiet 2>/dev/null || true
     echo "CONFLICT: Task already claimed by another agent" >&2
     exit 2
 fi

@@ -3,6 +3,7 @@ orchestrator:
  poll_interval_minutes: 10
  task_timeout_minutes: 30
  enable_auto_release: true
+ default_branch: develop
 
 agents.default:
  model: claude-sonnet-4
@@ -23,9 +24,13 @@ quality:
 
 git:
  main_branch: main
+ develop_branch: develop
+ coordination_branch: develop
  feature_branch_prefix: feature/TASK-
  fix_branch_prefix: fix/TASK-
  require_pr_reviews: true
+ branching_strategy: git-flow
+ agent_work_branch: develop
 
 notifications:
  enable_status_updates: true

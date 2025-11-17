@@ -1,12 +1,15 @@
 #!/bin/bash
 # Update heartbeat timestamp for claimed task to signal active work
-# Usage: ./heartbeat-task.sh <task-id> <agent-id> [project-id]
+# Usage: ./heartbeat-task.sh <task-id> <agent-id> [project-id] [branch]
+#
+# Best Practice: Agents work on 'develop' branch for coordination
 
 set -e
 
 TASK_ID="$1"
 AGENT_ID="$2"
 PROJECT="${3:-dating-platform}"
+BRANCH="${4:-develop}"  # Default to develop branch
 
 if [ -z "$TASK_ID" ] || [ -z "$AGENT_ID" ]; then
     echo "Usage: $0 <task-id> <agent-id> [project-id]" >&2
@@ -28,7 +31,8 @@ if [ "$OWNER" != "$AGENT_ID" ]; then
 fi
 
 # Pull latest changes
-git pull --rebase origin main 2>/dev/null || true
+git checkout "$BRANCH" 2>/dev/null || true
+git pull --rebase origin "$BRANCH" 2>/dev/null || true
 
 # Check if task still exists after pull
 if [ ! -f "$CLAIMED_FILE" ]; then
@@ -53,13 +57,13 @@ git add "$CLAIMED_FILE"
 git commit -m "[AGENT-HEARTBEAT] $AGENT_ID working on $TASK_ID" --quiet
 
 # Push heartbeat (non-critical if fails)
-if git push origin main --quiet 2>/dev/null; then
+if git push origin "$BRANCH" --quiet 2>/dev/null; then
     echo "Heartbeat updated for $TASK_ID at $HEARTBEAT_TIME" >&2
     exit 0
 else
     # If push fails, just pull and try once more
-    git pull --rebase origin main --quiet 2>/dev/null || true
-    if git push origin main --quiet 2>/dev/null; then
+    git pull --rebase origin "$BRANCH" --quiet 2>/dev/null || true
+    if git push origin "$BRANCH" --quiet 2>/dev/null; then
         echo "Heartbeat updated for $TASK_ID at $HEARTBEAT_TIME (retry)" >&2
         exit 0
     else
