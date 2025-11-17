@@ -1,0 +1,94 @@
+name: Agent Executor
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "Multi-Agent System"
+          git config user.email "agents@saltbitter.dev"
+
+      - name: Claim task
+        id: claim
+        run: |
+          chmod +x .agents/scripts/claim-task.sh
+          AGENT_ID="agent-${{ github.run_id }}-${{ github.run_attempt }}"
+
+          # Try to claim a task
+          if TASK_ID=$(./.agents/scripts/claim-task.sh "$AGENT_ID"); then
+            echo "task_id=$TASK_ID" >> $GITHUB_OUTPUT
+            echo "agent_id=$AGENT_ID" >> $GITHUB_OUTPUT
+            echo "✓ Claimed task: $TASK_ID"
+          else
+            echo "No tasks available to claim"
+            exit 0
+          fi
+
+      - name: Read task file
+        if: steps.claim.outputs.task_id != ''
+        id: task
+        run: |
+          TASK_FILE=".agents/claimed/${{ steps.claim.outputs.task_id }}.toon"
+          echo "task_file=$TASK_FILE" >> $GITHUB_OUTPUT
+          echo "Task content:"
+          cat "$TASK_FILE"
+
+      - name: Read prompt template
+        if: steps.claim.outputs.task_id != ''
+        id: prompt
+        run: |
+          # Default to coder prompt for now
+          PROMPT_FILE=".agents/prompts/coder.toon"
+          echo "prompt_file=$PROMPT_FILE" >> $GITHUB_OUTPUT
+
+      - name: Execute task with LLM
+        if: steps.claim.outputs.task_id != ''
+        run: |
+          echo "=== Executing Task ==="
+          echo "Task ID: ${{ steps.claim.outputs.task_id }}"
+          echo "Agent ID: ${{ steps.claim.outputs.agent_id }}"
+          echo "Task File: ${{ steps.task.outputs.task_file }}"
+          echo "Prompt: ${{ steps.prompt.outputs.prompt_file }}"
+          echo ""
+          echo "TODO: Integrate with Claude Code or other LLM provider"
+          echo "This step would invoke the LLM agent with:"
+          echo "- Task definition from TOON file"
+          echo "- Prompt template from TOON file"
+          echo "- Project context from AGENTS.md"
+          echo ""
+          echo "For now, this is a placeholder that demonstrates the workflow"
+
+      # TODO: Actual LLM integration
+      # This is where you would call Claude Code, GPT-4, or other LLM
+      # passing the task file and prompt template as context
+
+      # Example with Claude Code (pseudocode):
+      # - name: Execute with Claude Code
+      #   env:
+      #     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      #   run: |
+      #     claude-code execute \
+      #       --task-file "${{ steps.task.outputs.task_file }}" \
+      #       --prompt-file "${{ steps.prompt.outputs.prompt_file }}" \
+      #       --context-file "AGENTS.md"
+
+      - name: Complete task (placeholder)
+        if: steps.claim.outputs.task_id != ''
+        run: |
+          chmod +x .agents/scripts/complete-task.sh
+          # In real implementation, this would be called by the LLM agent
+          # after it completes the work
+          echo "Task execution complete (placeholder)"
