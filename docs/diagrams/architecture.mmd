@@ -1,0 +1,113 @@
+graph TB
+    subgraph "Client Layer"
+        Web[Web App<br/>React + TypeScript]
+        iOS[iOS App<br/>React Native]
+        Android[Android App<br/>React Native]
+    end
+
+    subgraph "CDN & Load Balancing"
+        CF[CloudFront CDN]
+        ALB[Application Load Balancer]
+    end
+
+    subgraph "Application Layer - ECS Fargate"
+        API1[API Instance 1<br/>FastAPI]
+        API2[API Instance 2<br/>FastAPI]
+        APIN[API Instance N<br/>FastAPI]
+    end
+
+    subgraph "Service Modules"
+        Auth[Auth Service<br/>JWT, Login, Register]
+        Profile[Profile Service<br/>Profiles, Photos]
+        Attachment[Attachment Service<br/>ECR-R Assessment]
+        Matching[Matching Service<br/>Compatibility Algorithm]
+        Messaging[Messaging Service<br/>Real-time Chat]
+        AI[AI Service<br/>GPT-4 Companions]
+        Payment[Payment Service<br/>Stripe Integration]
+        Compliance[Compliance Service<br/>GDPR, Data Export]
+    end
+
+    subgraph "Background Workers"
+        Celery[Celery Workers<br/>Async Jobs]
+        Beat[Celery Beat<br/>Cron Scheduler]
+    end
+
+    subgraph "Data Layer"
+        PG[(PostgreSQL RDS<br/>Primary Database<br/>Multi-AZ)]
+        Replica[(Read Replica<br/>Analytics)]
+        Redis[(Redis ElastiCache<br/>Cache + Queue)]
+        S3[(S3<br/>Photo Storage)]
+    end
+
+    subgraph "External Services"
+        OpenAI[OpenAI GPT-4]
+        Stripe[Stripe Payments]
+        SES[AWS SES<br/>Email]
+        Rekognition[AWS Rekognition<br/>Photo Moderation]
+        Perspective[Perspective API<br/>Content Moderation]
+    end
+
+    subgraph "Monitoring & Ops"
+        DataDog[DataDog<br/>APM, Logs, Metrics]
+        PagerDuty[PagerDuty<br/>On-call Alerts]
+    end
+
+    Web --> CF
+    iOS --> CF
+    Android --> CF
+    CF --> ALB
+
+    ALB --> API1
+    ALB --> API2
+    ALB --> APIN
+
+    API1 --> Auth
+    API1 --> Profile
+    API1 --> Attachment
+    API1 --> Matching
+    API1 --> Messaging
+    API1 --> AI
+    API1 --> Payment
+    API1 --> Compliance
+
+    Auth --> PG
+    Auth --> Redis
+    Profile --> PG
+    Profile --> S3
+    Profile --> Rekognition
+    Attachment --> PG
+    Matching --> PG
+    Matching --> Redis
+    Messaging --> PG
+    Messaging --> Redis
+    Messaging --> Perspective
+    AI --> PG
+    AI --> OpenAI
+    Payment --> PG
+    Payment --> Stripe
+    Compliance --> PG
+
+    Celery --> Redis
+    Beat --> Redis
+    Celery --> PG
+    Celery --> SES
+    Celery --> Matching
+    Celery --> Payment
+
+    PG -.->|Replicate| Replica
+
+    API1 -.->|Metrics| DataDog
+    API2 -.->|Metrics| DataDog
+    PG -.->|Metrics| DataDog
+    Redis -.->|Metrics| DataDog
+    DataDog -.->|Alerts| PagerDuty
+
+    style Web fill:#61DAFB
+    style iOS fill:#61DAFB
+    style Android fill:#61DAFB
+    style API1 fill:#009688
+    style API2 fill:#009688
+    style APIN fill:#009688
+    style PG fill:#336791
+    style Redis fill:#DC382D
+    style DataDog fill:#632CA6
