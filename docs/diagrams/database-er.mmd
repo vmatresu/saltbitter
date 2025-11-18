@@ -1,0 +1,130 @@
+erDiagram
+    users ||--o| profiles : has
+    users ||--o{ refresh_tokens : has
+    users ||--o{ attachment_assessments : has
+    users ||--o{ matches : "user_a"
+    users ||--o{ matches : "user_b"
+    users ||--o{ messages : sends
+    users ||--o{ messages : receives
+    users ||--o| subscriptions : has
+    users ||--o{ consent_logs : has
+    users ||--o{ compliance_logs : has
+    users ||--o{ ai_interactions : has
+    users ||--o{ event_registrations : has
+
+    users {
+        uuid id PK
+        string email UK
+        string password_hash
+        boolean email_verified
+        string subscription_tier
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    profiles {
+        uuid id PK
+        uuid user_id FK UK
+        string name
+        date date_of_birth
+        string gender
+        text bio
+        jsonb photos
+        jsonb interests
+        geography location
+        string city
+        jsonb preferences
+        timestamp created_at
+    }
+
+    attachment_assessments {
+        uuid id PK
+        uuid user_id FK
+        decimal anxiety_score
+        decimal avoidance_score
+        string style
+        jsonb responses
+        timestamp created_at
+    }
+
+    matches {
+        uuid id PK
+        uuid user_a_id FK
+        uuid user_b_id FK
+        decimal compatibility_score
+        jsonb compatibility_breakdown
+        string status
+        timestamp matched_at
+    }
+
+    messages {
+        uuid id PK
+        uuid from_user_id FK
+        uuid to_user_id FK
+        text content
+        boolean read
+        boolean moderation_flagged
+        timestamp sent_at
+    }
+
+    subscriptions {
+        uuid id PK
+        uuid user_id FK UK
+        string tier
+        string stripe_subscription_id UK
+        string stripe_customer_id
+        string status
+        timestamp current_period_start
+        timestamp current_period_end
+        boolean cancel_at_period_end
+        timestamp created_at
+    }
+
+    refresh_tokens {
+        uuid id PK
+        uuid user_id FK
+        string token_hash UK
+        text device_info
+        timestamp expires_at
+        boolean revoked
+        timestamp created_at
+        timestamp last_used_at
+    }
+
+    consent_logs {
+        uuid id PK
+        uuid user_id FK
+        string consent_type
+        boolean granted
+        inet ip_address
+        text user_agent
+        timestamp created_at
+    }
+
+    compliance_logs {
+        uuid id PK
+        uuid user_id FK
+        string action_type
+        jsonb metadata
+        inet ip_address
+        timestamp created_at
+    }
+
+    ai_interactions {
+        uuid id PK
+        uuid user_id FK
+        string ai_type
+        boolean disclosure_shown
+        boolean consent_granted
+        integer interaction_count
+        timestamp created_at
+    }
+
+    event_registrations {
+        uuid id PK
+        uuid event_id FK
+        uuid user_id FK
+        string status
+        decimal amount_paid
+        timestamp registered_at
+    }
