@@ -77,3 +77,9 @@ metadata:
  created_at: 2025-11-17T17:00:00Z
  estimated_hours: 12
  complexity: high
+
+claim:
+ status: claimed
+ claimed_at: 2025-11-18T07:44:30Z
+ claimed_by: agent-software-engineer-1763451818
+ last_heartbeat: 2025-11-18T07:44:30Z
