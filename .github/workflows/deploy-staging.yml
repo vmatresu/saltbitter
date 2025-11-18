@@ -1,0 +1,153 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY_BACKEND: saltbitter-backend
+  ECR_REPOSITORY_FRONTEND: saltbitter-frontend
+  ECS_CLUSTER: saltbitter-staging
+  ECS_SERVICE_BACKEND: backend-service
+  ECS_SERVICE_FRONTEND: frontend-service
+  ENVIRONMENT: staging
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to Staging
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build backend Docker image
+        id: build-backend
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f backend/Dockerfile.dev -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG backend/
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:latest
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build frontend Docker image
+        id: build-frontend
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f frontend/Dockerfile.dev -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG frontend/
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:latest
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Update backend task definition
+        id: backend-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: .aws/task-definition-backend-staging.json
+          container-name: backend
+          image: ${{ steps.build-backend.outputs.image }}
+
+      - name: Deploy backend to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.backend-task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_BACKEND }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Update frontend task definition
+        id: frontend-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: .aws/task-definition-frontend-staging.json
+          container-name: frontend
+          image: ${{ steps.build-frontend.outputs.image }}
+
+      - name: Deploy frontend to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.frontend-task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_FRONTEND }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging..."
+
+          # Wait for services to be fully up
+          sleep 30
+
+          # Test backend health
+          BACKEND_URL="https://api-staging.saltbitter.com/health"
+          BACKEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $BACKEND_URL)
+
+          if [ "$BACKEND_STATUS" = "200" ]; then
+            echo "✅ Backend health check passed"
+          else
+            echo "❌ Backend health check failed (HTTP $BACKEND_STATUS)"
+            exit 1
+          fi
+
+          # Test frontend
+          FRONTEND_URL="https://staging.saltbitter.com"
+          FRONTEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $FRONTEND_URL)
+
+          if [ "$FRONTEND_STATUS" = "200" ]; then
+            echo "✅ Frontend health check passed"
+          else
+            echo "❌ Frontend health check failed (HTTP $FRONTEND_STATUS)"
+            exit 1
+          fi
+
+      - name: Run post-deployment tests
+        run: |
+          echo "Running post-deployment integration tests..."
+          # Add any additional integration tests against staging environment
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "🚀 Successfully deployed to staging!"
+          echo "Backend: ${{ steps.build-backend.outputs.image }}"
+          echo "Frontend: ${{ steps.build-frontend.outputs.image }}"
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "❌ Deployment to staging failed!"
+          echo "Consider running rollback: ./scripts/rollback.sh staging <previous-version>"
+
+      - name: Create deployment record
+        if: success()
+        run: |
+          mkdir -p .deployments
+          cat > .deployments/staging-$(date +%Y%m%d-%H%M%S).json <<EOF
+          {
+            "environment": "staging",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "${{ github.sha }}",
+            "backend_image": "${{ steps.build-backend.outputs.image }}",
+            "frontend_image": "${{ steps.build-frontend.outputs.image }}",
+            "deployed_by": "${{ github.actor }}"
+          }
+          EOF
