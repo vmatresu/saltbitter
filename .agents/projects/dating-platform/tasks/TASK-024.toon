@@ -4,7 +4,7 @@ task:
  title: Create technical documentation and operational runbooks
  type: documentation
  priority: 5
- status: blocked
+ status: ready
 
 description:
  summary: Write technical implementation docs and operational runbooks
