@@ -12,6 +12,7 @@ from services.attachment import attachment_router
 from services.auth import auth_router
 from services.auth.rate_limiter import rate_limit_middleware
 from services.compliance import compliance_router
+from services.messaging import messaging_router
 from services.profile import profile_router
 
 # Create FastAPI application
@@ -40,6 +41,7 @@ app.include_router(auth_router)
 app.include_router(profile_router)
 app.include_router(attachment_router)
 app.include_router(compliance_router)
+app.include_router(messaging_router)
 
 
 @app.get("/")

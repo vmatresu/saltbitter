@@ -4,7 +4,7 @@ task:
  title: Implement real-time messaging service
  type: backend
  priority: 7
- status: ready
+ status: claimed
 
 description:
  summary: Build WebSocket-based real-time chat for matched users
@@ -85,3 +85,8 @@ metadata:
  created_at: 2025-11-17T17:02:00Z
  estimated_hours: 14
  complexity: high
+
+claim:
+ claimed_at: 2025-11-19T00:00:00Z
+ claimed_by: agent-software-engineer-claude
+ last_heartbeat: 2025-11-19T00:00:00Z
