@@ -1,0 +1,261 @@
+quality_standards:
+ description: Code quality requirements and enforcement
+ version: 1.0.0
+
+test_coverage:
+ backend_minimum_percent: 85
+ frontend_minimum_percent: 70
+ enforcement: Block PR if coverage below threshold
+ exceptions: Can exclude specific files (migrations, generated code)
+
+testing_requirements:
+ backend[5]:
+  Unit tests for all business logic
+  Integration tests for API endpoints
+  Database tests with test fixtures
+  Mock external services (Stripe, AWS, etc)
+  Async test support with pytest-asyncio
+
+ frontend[5]:
+  Unit tests for utilities and hooks
+  Component tests with React Testing Library
+  Integration tests for critical flows
+  Mock API calls
+  Accessibility tests (a11y)
+
+ test_quality[4]:
+  Tests must be deterministic (no flaky tests)
+  Tests must be independent (no shared state)
+  Tests must be fast (< 5 seconds per test)
+  Tests must have clear descriptions
+
+linting:
+ backend:
+  tool: ruff
+  config: pyproject.toml or ruff.toml
+  rules: Extend recommended, add project-specific rules
+  enforcement: Zero linting errors allowed
+
+ frontend:
+  tool: ESLint
+  config: .eslintrc.json
+  extends[3]:
+   eslint:recommended
+   plugin:react/recommended
+   plugin:@typescript-eslint/recommended
+  enforcement: Zero linting errors allowed
+
+formatting:
+ backend:
+  tool: black
+  line_length: 100
+  enforcement: Auto-format on commit or CI check
+
+ frontend:
+  tool: Prettier
+  config: .prettierrc
+  enforcement: Auto-format on commit or CI check
+
+type_checking:
+ backend:
+  tool: mypy
+  mode: --strict
+  config: mypy.ini or pyproject.toml
+  enforcement: Zero type errors allowed
+
+ frontend:
+  tool: TypeScript compiler
+  mode: strict
+  config: tsconfig.json with strict: true
+  enforcement: Zero type errors allowed
+
+security_scanning:
+ backend[3]:
+  tool: bandit
+  command: bandit -r backend/
+  enforcement: No high or medium severity issues
+
+  tool: safety
+  command: safety check
+  enforcement: No known vulnerabilities in dependencies
+
+  tool: pip-audit
+  command: pip-audit
+  enforcement: No vulnerabilities in dependencies
+
+ frontend[2]:
+  tool: npm audit
+  command: npm audit --audit-level=moderate
+  enforcement: No moderate or high vulnerabilities
+
+  tool: eslint-plugin-security
+  enforcement: No security linting issues
+
+code_review:
+ required_approvals: 1
+ automated_checks_must_pass: true
+ reviewer_checklist:
+  See core/roles/reviewer.toon
+
+documentation:
+ code_documentation[4]:
+  All public functions have docstrings (backend)
+  All public components have JSDoc (frontend)
+  Complex logic has explanatory comments
+  API endpoints documented via OpenAPI
+
+ project_documentation[3]:
+  README.md with setup instructions
+  API documentation (auto-generated from OpenAPI)
+  Architecture documentation (state/{project}/architecture.toon)
+
+performance_requirements:
+ api:
+  response_time_p95_ms: 200
+  response_time_p99_ms: 500
+  timeout_seconds: 30
+
+ frontend:
+  lighthouse_performance_score: 90
+  first_contentful_paint_ms: 1500
+  time_to_interactive_ms: 3000
+
+ database:
+  query_time_p95_ms: 50
+  connection_pool: Properly configured
+  indexes: All queried fields indexed
+
+accessibility:
+ wcag_level: AA
+ tools[2]:
+  axe-core (automated testing)
+  Manual testing with screen reader
+
+ requirements[5]:
+  Semantic HTML
+  ARIA labels where needed
+  Keyboard navigation support
+  Color contrast ratios
+  Alt text for images
+
+git_commit_standards:
+ format: "{task-id}: {descriptive message}"
+ examples[3]:
+  TASK-001: Add user authentication endpoints
+  TASK-005: Fix password validation bug
+  TASK-012: Refactor database connection pooling
+
+ requirements[4]:
+  Present tense ("Add" not "Added")
+  Imperative mood ("Fix" not "Fixes")
+  Capitalize first letter
+  No period at end
+
+ agent_commits[3]:
+  [AGENT-CLAIM] {agent-id} claimed {task-id}
+  [AGENT-COMPLETE] {agent-id} completed {task-id}
+  [AGENT-HEARTBEAT] {agent-id} heartbeat {task-id}
+
+pr_requirements:
+ title: "{task-id}: {task.title}"
+ description_must_include[5]:
+  Summary of changes
+  Link to task file
+  Acceptance criteria checklist
+  Testing details
+  Any breaking changes
+
+ size:
+  ideal_lines: < 400
+  maximum_lines: 800
+  reason: Easier to review, less merge conflicts
+
+ci_cd_requirements:
+ all_checks_must_pass[8]:
+  Test suite (backend)
+  Test suite (frontend)
+  Linting (backend)
+  Linting (frontend)
+  Type checking (backend)
+  Type checking (frontend)
+  Security scanning
+  Code coverage threshold
+
+ build_must_succeed:
+  backend: Docker image builds
+  frontend: Production build succeeds
+
+error_handling:
+ backend[5]:
+  Use structured logging (JSON format)
+  Log all errors with context
+  Return meaningful error messages
+  Use appropriate HTTP status codes
+  Never expose stack traces to users
+
+ frontend[5]:
+  Error boundaries for component errors
+  User-friendly error messages
+  Retry logic for network errors
+  Fallback UI for errors
+  Log errors to error tracking service
+
+code_quality_principles:
+ solid_principles: Follow SOLID where applicable
+ dry: Don't Repeat Yourself
+ kiss: Keep It Simple, Stupid
+ yagni: You Aren't Gonna Need It
+ separation_of_concerns: Clear boundaries between layers
+
+anti_patterns_to_avoid[10]:
+ God objects (classes doing too much)
+ Spaghetti code (tangled logic)
+ Hardcoded values (use config)
+ Magic numbers (use named constants)
+ Deep nesting (> 3 levels)
+ Long functions (> 50 lines)
+ Copy-paste code
+ Commented-out code
+ Debug statements in production
+ TODO comments without tracking
+
+enforcement_levels:
+ blocking[6]:
+  Failing tests
+  Security vulnerabilities
+  Linting errors
+  Type errors
+  Coverage below threshold
+  Build failures
+
+ non_blocking[4]:
+  Documentation improvements
+  Performance optimizations (if acceptable)
+  Code style suggestions
+  Refactoring opportunities
+
+quality_gates:
+ pre_commit:
+  format: Auto-format code
+  lint: Run linters
+  type_check: Run type checking
+
+ pre_push:
+  test: Run test suite
+  coverage: Check coverage
+
+ pull_request:
+  ci: All CI checks pass
+  review: Peer review approval
+  merge: Squash and merge
+
+continuous_improvement:
+ retrospectives: Review and update standards quarterly
+ metrics: Track quality metrics over time
+ automation: Automate more quality checks
+ training: Share best practices with team
+
+metadata:
+ created_at: 2025-11-19T00:00:00Z
+ last_updated: 2025-11-19T00:00:00Z
+ compatible_with: core/roles/*.toon

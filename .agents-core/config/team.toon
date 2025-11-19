@@ -1,0 +1,191 @@
+team:
+ description: Team structure and agent roles
+ version: 1.0.0
+
+available_roles[4]:
+ product_owner:
+  responsibility: Define requirements and acceptance criteria
+  input: Business goals, user needs
+  output: config/project.toon
+  prompt: core/roles/product-owner.toon
+  entry_point: start/product-owner.toon
+  color: blue
+  icon: 📋
+
+ architect:
+  responsibility: Design architecture and create task breakdown
+  input: config/project.toon
+  output[2]:
+   state/{project}/architecture.toon
+   state/{project}/tasks/TASK-*.toon
+  prompt: core/roles/architect.toon
+  entry_point: start/architect.toon
+  color: purple
+  icon: 🏗️
+
+ engineer:
+  responsibility: Implement features with tests
+  input: state/{project}/claimed/{task-id}.toon
+  output[3]:
+   Code implementation
+   Tests
+   Pull request
+  prompt: core/roles/engineer.toon
+  entry_point: start/engineer.toon
+  color: green
+  icon: 👨‍💻
+
+ reviewer:
+  responsibility: Code review and quality assurance
+  input: Pull request
+  output: Review comments, approval/rejection
+  prompt: core/roles/reviewer.toon
+  entry_point: start/reviewer.toon
+  color: orange
+  icon: 🔍
+
+agent_configuration:
+ default_model: claude-sonnet-4
+ max_concurrent_agents: 4
+ agent_id_format: "{role}-{timestamp}-{random}"
+
+ retry_policy:
+  max_retries: 4
+  backoff_strategy: exponential
+  backoff_base_seconds: 2
+
+orchestration:
+ enabled: true
+ poll_interval_minutes: 10
+ max_tasks_per_cycle: 3
+
+communication:
+ method: Git commits (asynchronous)
+ no_direct_messaging: true
+ coordination_primitives[3]:
+  Task files (work to be done)
+  Commit messages (signals)
+  File locations (state transitions)
+
+role_permissions:
+ product_owner[3]:
+  write: config/project.toon
+  read: all
+  git_branch: develop
+
+ architect[4]:
+  write: state/{project}/architecture.toon, state/{project}/tasks/
+  read: config/*, state/{project}/
+  git_branch: develop
+  creates: Project directory structure
+
+ engineer[4]:
+  write: code files, state/{project}/claimed/, state/{project}/completed/
+  read: config/*, state/{project}/
+  git_branches: develop (claim/complete), feature/* (implementation)
+  moves_files: tasks/ → claimed/ → completed/
+
+ reviewer[3]:
+  write: PR reviews
+  read: code files, state/{project}/completed/, PRs
+  git_branch: none (reviews only)
+
+team_workflows:
+ project_inception:
+  roles[1]: product_owner
+  output: config/project.toon
+  next: architect
+
+ architecture_phase:
+  roles[1]: architect
+  input: config/project.toon
+  output: architecture + tasks
+  next: engineers
+
+ implementation_phase:
+  roles[2]: engineer (multiple in parallel)
+  input: available tasks
+  output: code + tests + PRs
+  next: reviewer (per PR)
+
+ review_phase:
+  roles[1]: reviewer
+  input: pull request
+  output: approval or change requests
+  next: merge or engineer (if changes)
+
+collaboration_patterns:
+ parallel_execution:
+  who: Multiple engineers
+  what: Independent tasks
+  coordination: Git atomic operations
+
+ sequential_dependencies:
+  what: Task A depends on Task B
+  enforcement: task.dependencies.required
+  automatic: B completion unlocks A
+
+ feedback_loops:
+  reviewer_to_engineer: Via PR comments
+  architect_to_po: Via discussions (outside Git)
+  engineer_to_architect: Via questions (outside Git)
+
+agent_autonomy:
+ decision_making:
+  engineers: Full autonomy on implementation details
+  architects: Full autonomy on architecture design
+  reviewers: Full autonomy on code quality decisions
+  product_owners: Full autonomy on requirements
+
+ constraints:
+  must_follow: config/quality-standards.toon
+  must_use: config/tech-stack.toon
+  must_respect: task.acceptance_criteria
+
+escalation:
+ when_needed[4]:
+  Unclear requirements (engineer → product owner)
+  Architectural concerns (engineer → architect)
+  Security vulnerabilities (reviewer → architect)
+  Blocked tasks (any → human)
+
+ mechanism: Outside Git (Slack, email, GitHub issues)
+
+performance_metrics:
+ track_per_agent[5]:
+  tasks_claimed: Count
+  tasks_completed: Count
+  average_completion_time: Hours
+  pr_approval_rate: Percentage
+  bugs_introduced: Count
+
+ track_per_project[4]:
+  total_tasks: Count
+  completed_tasks: Count
+  average_task_duration: Hours
+  code_coverage: Percentage
+
+team_expansion:
+ add_new_role:
+  step_1: Create core/roles/{new-role}.toon
+  step_2: Create start/{new-role}.toon
+  step_3: Update config/team.toon
+  step_4: Document in BOOTSTRAP.md
+
+ example_new_roles[4]:
+  security_auditor (security reviews)
+  ux_designer (design tasks)
+  data_engineer (data pipeline tasks)
+  devops_engineer (infrastructure tasks)
+
+best_practices:
+ clear_responsibilities: Each role has distinct purpose
+ no_overlap: Avoid role confusion
+ autonomous_agents: Agents make decisions independently
+ git_coordination: All coordination through Git
+ quality_first: Never compromise on quality standards
+
+metadata:
+ created_at: 2025-11-19T00:00:00Z
+ last_updated: 2025-11-19T00:00:00Z
+ compatible_with: core/roles/*.toon

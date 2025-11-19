@@ -1,0 +1,68 @@
+project:
+ id: example-project
+ name: Example Project
+ tagline: A template project specification
+ version: 1.0.0
+ status: planning
+
+mission:
+ primary: {Define your core mission}
+ approach: {How you'll achieve it}
+ north_star_metric: {Key success metric}
+
+business_goals[3]:
+ {Business goal 1}
+ {Business goal 2}
+ {Business goal 3}
+
+user_stories[3]{id,role,action,benefit,priority}:
+ US-001,user,{action},{benefit},10
+ US-002,user,{action},{benefit},9
+ US-003,user,{action},{benefit},8
+
+technical_constraints:
+ compliance_required[1]:
+  {Any compliance requirements - GDPR, HIPAA, etc}
+
+ stack:
+  backend: {See config/tech-stack.toon}
+  frontend: {See config/tech-stack.toon}
+  database: {See config/tech-stack.toon}
+  infrastructure: {See config/tech-stack.toon}
+
+ performance:
+  api_response_p95_ms: 200
+  api_response_p99_ms: 500
+
+ security:
+  authentication: JWT
+  encryption: TLS 1.3
+  data_protection: {Your requirements}
+
+quality_standards:
+ code_coverage_min_percent: 85
+ required_checks[6]:
+  All tests passing
+  Linting clean
+  Type checking clean
+  Security scan passing
+  Code coverage meets threshold
+  Build succeeds
+
+success_metrics[3]{metric,target}:
+ {Metric 1},{Target}
+ {Metric 2},{Target}
+ {Metric 3},{Target}
+
+implementation_phases:
+ phase_1_foundation:
+  duration_months: 2
+  deliverables[3]:
+   {Deliverable 1}
+   {Deliverable 2}
+   {Deliverable 3}
+
+metadata:
+ created_at: {ISO-8601 timestamp}
+ created_by: product-owner-agent
+ next_step: architect-creates-tasks

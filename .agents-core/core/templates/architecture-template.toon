@@ -1,0 +1,81 @@
+architecture:
+ name: {System Name} Architecture
+ style: {Architectural style - monolith, microservices, serverless, etc}
+ project: {project-id}
+
+layers[N]{name,tech,purpose}:
+ {layer1},{technology},{purpose}
+ {layer2},{technology},{purpose}
+
+components[N]{name,responsibility,apis}:
+ {component1},{what it does},{API endpoints}
+ {component2},{what it does},{API endpoints}
+
+data_models[N]{table,key_fields}:
+ {table1},{field1,field2,field3}
+ {table2},{field1,field2,field3}
+
+dependencies:
+ {component1}: [{dependency1},{dependency2}]
+ {component2}: [{dependency1}]
+
+infrastructure:
+ hosting: {Cloud provider and services}
+ database: {Database technology and configuration}
+ caching: {Caching strategy}
+ cdn: {CDN provider}
+ monitoring: {Monitoring tools}
+ logging: {Logging infrastructure}
+
+security_architecture:
+ authentication: {Auth mechanism}
+ authorization: {AuthZ mechanism}
+ data_encryption: {Encryption strategy}
+ secrets_management: {Secrets handling}
+ network_security: {Network configuration}
+
+scalability:
+ horizontal_scaling: {Scaling strategy}
+ vertical_scaling: {Scaling limits}
+ database_scaling: {DB scaling approach}
+ caching_strategy: {Cache configuration}
+ load_balancing: {Load balancer setup}
+
+api_design:
+ style: REST|GraphQL|gRPC
+ versioning: {Versioning strategy}
+ authentication: {API auth mechanism}
+ rate_limiting: {Rate limit configuration}
+ documentation: {API docs location}
+
+integration_points[N]{system,protocol,purpose}:
+ {external_system},{protocol},{why}
+
+deployment_architecture:
+ environments[N]:
+  {environment name}
+ ci_cd_pipeline: {Pipeline description}
+ infrastructure_as_code: {IaC tool}
+ deployment_strategy: {blue-green, canary, rolling, etc}
+
+observability:
+ metrics: {Metrics collection}
+ logging: {Log aggregation}
+ tracing: {Distributed tracing}
+ alerting: {Alert configuration}
+
+disaster_recovery:
+ backup_strategy: {Backup approach}
+ rpo: {Recovery Point Objective}
+ rto: {Recovery Time Objective}
+ failover: {Failover mechanism}
+
+technology_decisions[N]{decision,rationale,alternatives}:
+ {Tech choice 1},{Why chosen},{What was considered}
+ {Tech choice 2},{Why chosen},{What was considered}
+
+metadata:
+ created_at: {ISO-8601 timestamp}
+ created_by: {agent-id}
+ version: 1.0.0
+ last_updated: {ISO-8601 timestamp}
