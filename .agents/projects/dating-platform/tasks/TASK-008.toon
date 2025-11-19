@@ -4,7 +4,7 @@ task:
  title: Implement real-time messaging service
  type: backend
  priority: 7
- status: blocked
+ status: ready
 
 description:
  summary: Build WebSocket-based real-time chat for matched users
