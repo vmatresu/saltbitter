@@ -1,0 +1,65 @@
+project:
+ id: {project-id}
+ name: {Project Name}
+ tagline: {Short description}
+ version: 1.0.0
+ status: planning|architecture_complete|in_progress|completed
+
+mission:
+ primary: {Core mission statement}
+ approach: {How you'll achieve it}
+ north_star_metric: {Key success metric}
+
+business_goals[N]:
+ {Business goal 1}
+ {Business goal 2}
+ {Business goal N}
+
+user_stories[N]{id,role,action,benefit,priority}:
+ US-001,user,{action},{benefit},10
+ US-002,user,{action},{benefit},9
+
+technical_constraints:
+ compliance_required[N]:
+  {Compliance requirement 1}
+  {Compliance requirement 2}
+ stack:
+  backend: {Backend technology stack}
+  frontend: {Frontend technology stack}
+  database: {Database systems}
+  infrastructure: {Cloud/hosting platform}
+ performance:
+  {metric}: {target}
+ security:
+  {requirement}: {specification}
+
+quality_standards:
+ code_coverage_min_percent: 85
+ required_checks[N]:
+  {Check 1}
+  {Check 2}
+ development_practices:
+  version_control: {VCS strategy}
+  code_review: {Review requirements}
+  testing: {Testing strategy}
+  ci_cd: {CI/CD platform}
+
+success_metrics[N]{metric,target}:
+ {Metric 1},{Target value}
+ {Metric 2},{Target value}
+
+implementation_phases:
+ phase_1:
+  duration_months: {number}
+  deliverables[N]:
+   {Deliverable 1}
+   {Deliverable 2}
+
+documentation_references[N]:
+ {path/to/doc1.md}
+ {path/to/doc2.md}
+
+metadata:
+ created_at: {ISO-8601 timestamp}
+ created_by: {agent-id}
+ next_step: {Next action}

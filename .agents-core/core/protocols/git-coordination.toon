@@ -1,0 +1,158 @@
+protocol: Git-Based Agent Coordination
+version: 1.0.0
+purpose: Define branching strategy and atomic operations for multi-agent collaboration
+
+branching_strategy: git-flow
+description: Production-ready workflow with protected main branch and coordination branch
+
+branches[3]:
+ main:
+  purpose: Production-ready, stable code only
+  protection: Requires PR approval before merge
+  updated_via: PRs from coordination branch
+  tagged: Yes, for releases
+  agent_access: Read-only (no direct commits)
+
+ coordination_branch:
+  purpose: Agent task claiming, completion, and integration
+  default_name: develop (configurable in config/workflows.toon)
+  protection: Optional (depends on team preference)
+  updated_via: Agent claim/complete operations + feature branch PRs
+  state: Always in working condition
+  agent_access: Read-write for claim/complete, read for implementation
+
+ feature_branches:
+  purpose: Individual task implementation
+  naming: {prefix}TASK-{id}-{description}
+  prefix: Configurable (default: feature/, fix/, chore/)
+  created_from: coordination_branch
+  merged_to: coordination_branch (via PR)
+  deleted_after: Merge completion
+  agent_access: Full read-write during implementation
+
+agent_workflow:
+ phase_1_claim:
+  branch: coordination_branch
+  operation: Atomic file move + commit + push
+  git_commands[5]:
+   git fetch origin {coordination_branch}
+   git checkout {coordination_branch}
+   git pull --rebase origin {coordination_branch}
+   git commit -m "[AGENT-CLAIM] {agent-id} claimed {task-id}"
+   git push origin {coordination_branch}
+  atomicity: First agent to push wins, others receive conflict
+
+ phase_2_implement:
+  branch: feature/{task-id}-{description}
+  created_from: coordination_branch
+  git_commands[5]:
+   git checkout {coordination_branch}
+   git pull origin {coordination_branch}
+   git checkout -b feature/{task-id}-{description}
+   {agent implements code, tests, documentation}
+   git push -u origin feature/{task-id}-{description}
+  commits: Multiple commits allowed during implementation
+
+ phase_3_pr:
+  base_branch: coordination_branch
+  head_branch: feature/{task-id}-{description}
+  title_format: "{task-id}: {task.title}"
+  body_requirements[5]:
+   Summary of implementation
+   Link to task file: state/{project}/claimed/{task-id}.toon
+   Acceptance criteria checklist
+   Testing details (coverage, passing tests)
+   Any unblocked tasks
+  automation: CI/CD runs tests, linters, security scans
+
+ phase_4_complete:
+  trigger: PR merged to coordination_branch
+  branch: coordination_branch
+  operation: Atomic file move + unblock dependents + commit + push
+  git_commands[4]:
+   git checkout {coordination_branch}
+   git pull origin {coordination_branch}
+   git commit -m "[AGENT-COMPLETE] {agent-id} completed {task-id}"
+   git push origin {coordination_branch}
+
+atomic_operations:
+ principle: Git's atomic push prevents race conditions
+ mechanism: Only first agent to push succeeds, others receive rejection
+ conflict_resolution: Losing agent rolls back local changes and tries different task
+ example_claim_race:
+  agent_a_pushes: Succeeds, task claimed
+  agent_b_pushes: Fails with "! [rejected]", rolls back
+  agent_b_action: Fetches latest, selects different ready task
+
+retry_policy:
+ network_failures: Retry with exponential backoff (2s, 4s, 8s, 16s)
+ max_retries: 4 attempts
+ applicable_to[2]:
+  git push (claim and complete operations)
+  git fetch/pull (state synchronization)
+ permanent_failures: Agent logs error and exits (human intervention needed)
+
+commit_message_conventions:
+ agent_claim: "[AGENT-CLAIM] {agent-id} claimed {task-id}"
+ agent_complete: "[AGENT-COMPLETE] {agent-id} completed {task-id}"
+ agent_heartbeat: "[AGENT-HEARTBEAT] {agent-id} heartbeat {task-id}"
+ task_implementation: "{task-id}: {descriptive commit message}"
+ architecture: "[ARCH] {architect changes description}"
+ product_owner: "[PO] {product owner changes description}"
+
+commit_guidelines:
+ atomic: Each commit represents single logical change
+ descriptive: Clear what changed and why
+ tested: Code compiles and tests pass before commit
+ signed: Optional GPG signing (configurable)
+
+merge_strategies:
+ coordination_to_main: Squash merge or merge commit (team preference)
+ feature_to_coordination: Squash merge (keeps history clean)
+ conflict_resolution: Manual resolution required, automated merge blocked
+
+release_workflow:
+ frequency: Periodic (daily, weekly, or per milestone)
+ process[5]:
+  Verify all tasks for milestone completed
+  Create PR: {coordination_branch} → main
+  Run full test suite and security audit
+  Human review and approval
+  Merge and tag release (v1.0.0, v1.1.0, etc.)
+ automation: GitHub Actions or CI/CD pipeline
+
+branch_protection_recommendations:
+ main_branch[4]:
+  Require PR before merge
+  Require status checks (tests, linting)
+  Require review approvals (1-2 reviewers)
+  Restrict direct pushes
+
+ coordination_branch[3]:
+  Optional: Require status checks
+  Allow agent direct pushes (for claim/complete)
+  Optional: Require linear history
+
+ feature_branches[1]:
+  No protection (agents have full control)
+
+observability:
+ task_history: git log --grep="\[AGENT-"
+ agent_activity: git log --author="{agent-id}"
+ project_progress: Compare tasks/ vs completed/ directories
+ dependency_graph: Parse dependencies.required from task files
+ stalled_tasks: Find claimed tasks with old last_heartbeat
+
+advantages:
+ race_free: Git's atomic push eliminates double-claiming
+ auditable: Full history in git log
+ recoverable: Easy rollback via git revert or reset
+ distributed: Agents work independently, sync via git
+ no_central_db: Git repository is single source of truth
+ scalable: Hundreds of agents can coordinate simultaneously
+
+metadata:
+ protocol_version: 1.0.0
+ created_at: 2025-11-19T00:00:00Z
+ framework: Git-native multi-agent coordination
+ compatible_with: Git 2.0+, GitHub, GitLab, Bitbucket

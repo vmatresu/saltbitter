@@ -1,0 +1,189 @@
+protocol: Agent Handshake and Context Loading
+version: 1.0.0
+purpose: Define how agents initialize, load context, and coordinate with each other
+
+agent_initialization:
+ step_1_load_config:
+  required_files[4]:
+   config/project.toon (project metadata)
+   config/tech-stack.toon (languages, frameworks, tools)
+   config/quality-standards.toon (coverage, linters, security)
+   config/workflows.toon (branch strategy, PR rules)
+  validation: Fail if any required config file missing
+
+ step_2_load_role:
+  role_definition: core/roles/{role-name}.toon
+  purpose: Understand responsibilities and workflow
+
+ step_3_sync_state:
+  git_operations[3]:
+   git fetch origin {coordination-branch}
+   git checkout {coordination-branch}
+   git pull --rebase origin {coordination-branch}
+  purpose: Get latest task state from other agents
+
+ step_4_load_project_state:
+  architecture: state/{project-id}/architecture.toon (if exists)
+  available_tasks: state/{project-id}/tasks/*.toon
+  claimed_tasks: state/{project-id}/claimed/*.toon
+  completed_tasks: state/{project-id}/completed/*.toon
+
+context_layers:
+ layer_1_framework:
+  purpose: How the multi-agent system works
+  files[3]:
+   core/protocols/task-lifecycle.toon
+   core/protocols/git-coordination.toon
+   core/protocols/agent-handshake.toon
+
+ layer_2_project:
+  purpose: What we're building
+  files[2]:
+   config/project.toon
+   state/{project-id}/architecture.toon
+
+ layer_3_standards:
+  purpose: How to build it
+  files[3]:
+   config/tech-stack.toon
+   config/quality-standards.toon
+   config/workflows.toon
+
+ layer_4_task:
+  purpose: Specific work to do
+  files[1]:
+   state/{project-id}/tasks/{task-id}.toon (or claimed/ or completed/)
+
+agent_roles:
+ product_owner:
+  input: Business requirements (GitHub issue, manual input)
+  output: config/project.toon
+  next_agent: Architect (via mention or workflow trigger)
+  context_needed[1]:
+   Business domain knowledge
+
+ architect:
+  input: config/project.toon
+  output[2]:
+   state/{project-id}/architecture.toon
+   state/{project-id}/tasks/TASK-*.toon
+  next_agent: Software Engineers (tasks become available)
+  context_needed[2]:
+   config/project.toon
+   config/tech-stack.toon
+
+ software_engineer:
+  input: state/{project-id}/claimed/{task-id}.toon
+  output[3]:
+   Code implementation
+   Tests
+   Pull request
+  next_agent: Reviewer (PR created) or next Engineer (task completed)
+  context_needed[5]:
+   config/tech-stack.toon
+   config/quality-standards.toon
+   config/workflows.toon
+   state/{project-id}/architecture.toon
+   state/{project-id}/claimed/{task-id}.toon
+
+ reviewer:
+  input: Pull request
+  output: Review comments, approval/rejection
+  next_agent: Engineer (if changes requested) or Complete (if approved)
+  context_needed[3]:
+   state/{project-id}/completed/{task-id}.toon
+   config/quality-standards.toon
+   PR diff and files
+
+inter_agent_communication:
+ asynchronous: Agents don't communicate directly, only via Git
+ message_passing: Git commits are "messages" to other agents
+ coordination_primitives[3]:
+  Task files: Work to be done
+  Commit messages: Signal actions taken
+  File locations: Indicate state (tasks/, claimed/, completed/)
+
+ example_flow:
+  architect_message: "[ARCH] Add architecture and 15 tasks"
+  engineer_reads: Sees 15 new files in state/{project}/tasks/
+  engineer_message: "[AGENT-CLAIM] agent-123 claimed TASK-001"
+  other_engineers_read: See TASK-001 no longer available
+  engineer_message_2: "[AGENT-COMPLETE] agent-123 completed TASK-001"
+  other_engineers_read: See TASK-002 now unblocked (dependency met)
+
+agent_discovery:
+ mechanism: Agents self-identify via commit messages
+ no_central_registry: No agent database or coordinator
+ agent_id_format: {role}-{unique-id} (e.g., agent-engineer-12345)
+ observability: git log shows all agent activity
+
+conflict_resolution:
+ task_claiming: Git atomic push (first wins, others try different task)
+ file_editing: Should not occur (agents work on separate tasks)
+ configuration_changes: Manual merge by human (config should be stable)
+
+stateless_agents:
+ principle: Each agent invocation is independent
+ no_memory: Agents don't remember previous invocations
+ all_state_in_git: Agent reconstructs context from Git files
+ idempotent_operations: Safe to re-run same operation
+
+parallel_execution:
+ enabled_by: Independent task files and Git coordination
+ maximum_concurrency: Limited by available ready tasks
+ no_coordination_overhead: Agents don't wait for each other
+ automatic_serialization: Dependencies force sequential execution
+
+error_handling:
+ git_conflict: Rollback and retry with different task
+ missing_config: Fail fast with clear error message
+ network_failure: Retry with exponential backoff
+ invalid_task: Log error, skip task, continue with others
+ test_failure: Do not create PR, log failure, release task
+
+observability_and_monitoring:
+ agent_activity: git log --grep="\[AGENT-"
+ task_progress: Count files in tasks/ vs claimed/ vs completed/
+ stalled_tasks: Find claimed tasks with old heartbeat
+ dependency_graph: Parse task files for dependencies.required
+ agent_performance: Measure time from claim to completion
+
+system_prompt_header:
+ purpose: All agents must prepend this to their context
+ content: |
+  You are a {role} agent in a multi-agent coordination system.
+
+  COORDINATION RULES:
+  1. Check state/{project}/claimed/*.toon before claiming
+  2. Check state/{project}/tasks/*.toon for available work
+  3. Update state via Git commits, not chat
+  4. Follow protocols in core/protocols/
+  5. Enforce standards from config/quality-standards.toon
+  6. Use atomic Git operations (first-commit-wins)
+
+  CONTEXT LOADED:
+  - Framework: core/protocols/*.toon
+  - Project: config/project.toon, state/{project}/architecture.toon
+  - Standards: config/tech-stack.toon, config/quality-standards.toon
+  - Workflow: config/workflows.toon
+  - Task: state/{project}/{status}/{task-id}.toon
+
+  REMEMBER:
+  - You are stateless (reconstruct context from Git)
+  - Other agents work in parallel (check state frequently)
+  - All coordination via Git commits (no side channels)
+  - Atomic operations prevent race conditions
+
+handshake_validation:
+ agent_must_confirm[6]:
+  I have loaded all required config files
+  I understand my role responsibilities
+  I have synced with latest Git state
+  I know which task I am working on (if applicable)
+  I will follow quality standards before creating PR
+  I will use atomic Git operations for state changes
+
+metadata:
+ protocol_version: 1.0.0
+ created_at: 2025-11-19T00:00:00Z
+ framework: Git-native multi-agent coordination

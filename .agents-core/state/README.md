@@ -1,0 +1,1 @@
+# Agent State Directory\n\nThis directory will contain project-specific state after initialization.\n\nStructure after architect creates tasks:\n```\nstate/\n└── {project-id}/\n    ├── architecture.toon\n    ├── tasks/\n    │   └── TASK-*.toon\n    ├── claimed/\n    │   └── TASK-*.toon\n    └── completed/\n        └── TASK-*.toon\n```

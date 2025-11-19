@@ -1,0 +1,56 @@
+task:
+ id: TASK-NNN
+ project: {project-id}
+ title: {Clear, actionable title}
+ type: feature|bugfix|refactor|test|docs|chore
+ priority: 1-10
+ status: ready|pending|blocked
+
+description:
+ summary: {One sentence overview}
+ details: |
+  {Complete implementation requirements}
+  {What needs to be built}
+  {Key functionality to implement}
+
+acceptance_criteria[N]:
+ {Measurable success condition 1}
+ {Measurable success condition 2}
+ {Measurable success condition N}
+
+dependencies:
+ required[N]:
+  {TASK-ID of prerequisite task}
+ blocks[M]:
+  {TASK-ID of task waiting on this}
+
+context:
+ files_to_create[N]:
+  {path/to/new/file.ext}
+ files_to_modify[M]:
+  {path/to/existing/file.ext}
+ database_migrations[K]:
+  {migration_name.sql}
+ related_docs[L]:
+  {path/to/relevant/documentation.md}
+
+technical_details:
+ database_tables[N]:
+  {table_name(columns)}
+ api_endpoints[M]:
+  {METHOD /api/path}
+ dependencies[K]:
+  {package-name}
+ configuration[L]:
+  {config.key: value}
+
+metadata:
+ created_by: {agent-id}
+ created_at: {ISO-8601 timestamp}
+ estimated_hours: {number}
+ complexity: low|medium|high
+
+notes: |
+ {Optional implementation notes}
+ {Links to external resources}
+ {Design decisions}

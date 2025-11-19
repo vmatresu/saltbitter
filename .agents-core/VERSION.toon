@@ -1,0 +1,74 @@
+framework:
+ name: Agents-Core
+ tagline: Portable Git-Native Multi-Agent Coordination Framework
+ version: 1.0.0
+ release_date: 2025-11-19
+
+description: |
+  A drop-in framework for enabling multi-agent teams to coordinate
+  via Git + TOON format. Agents (LLMs) work autonomously on tasks,
+  coordinating through atomic Git operations with zero central database.
+
+key_features[8]:
+ Portable: Copy .agents-core/ to any repo to enable multi-agent coordination
+ Git-native: All coordination through Git commits (atomic, first-commit-wins)
+ TOON format: 40% fewer tokens vs JSON for agent context
+ Role-based: Product Owner → Architect → Engineers → Reviewers
+ Stateless agents: Each invocation independent, full context from Git
+ Parallel execution: Multiple agents work simultaneously on independent tasks
+ Dependency management: Automatic task unlocking when dependencies complete
+ Zero infrastructure: No database, no servers, just Git
+
+components:
+ core: Framework logic (protocols, templates, roles) - DO NOT EDIT
+ config: Project-specific settings (tech stack, quality standards) - USER EDITS
+ scripts: Atomic helpers for claim/complete/heartbeat operations
+ start: Entry points for invoking different agent roles
+ state: Dynamic task state (tasks/, claimed/, completed/) - GIT TRACKED
+
+compatibility:
+ git_version: 2.0+
+ llm_models[3]:
+  claude-sonnet-4 (recommended)
+  claude-opus-4
+  gpt-4
+ platforms[3]:
+  GitHub
+  GitLab
+  Bitbucket
+
+protocols:
+ task_lifecycle: core/protocols/task-lifecycle.toon
+ git_coordination: core/protocols/git-coordination.toon
+ agent_handshake: core/protocols/agent-handshake.toon
+
+roles[4]:
+ product_owner: core/roles/product-owner.toon
+ architect: core/roles/architect.toon
+ engineer: core/roles/engineer.toon
+ reviewer: core/roles/reviewer.toon
+
+license: MIT
+repository: https://github.com/vmatresu/saltbitter
+documentation: BOOTSTRAP.md
+changelog: CHANGELOG.md
+
+version_history:
+ 1.0.0:
+  release_date: 2025-11-19
+  description: Initial framework extraction and standardization
+  changes[8]:
+   Extracted core protocols from saltbitter implementation
+   Created generic role definitions
+   Separated config from core logic
+   Generalized helper scripts
+   Created comprehensive documentation
+   Added template files for all artifacts
+   Standardized entry points
+   100% portable across projects
+
+metadata:
+ created_at: 2025-11-19T00:00:00Z
+ created_by: architect-agent
+ framework_type: multi-agent-coordination
+ paradigm: git-native-stateless

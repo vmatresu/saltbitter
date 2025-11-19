@@ -1,0 +1,317 @@
+manifest:
+ framework: agents-core
+ version: 1.0.0
+ purpose: Complete file inventory for portable multi-agent coordination framework
+ total_files: 32
+
+documentation[3]:
+ BOOTSTRAP.md:
+  purpose: Complete initialization and usage guide
+  audience: Developers setting up framework
+  edit: No (unless extending framework)
+
+ VERSION.toon:
+  purpose: Framework version and changelog
+  audience: All users
+  edit: No (updated by framework maintainers)
+
+ framework_manifest.toon:
+  purpose: This file - inventory of all framework files
+  audience: Framework developers
+  edit: No (unless adding new files)
+
+configuration[5]:
+ config/project.toon:
+  purpose: Project specification and requirements
+  created_by: Product Owner agent or manual
+  edit: Yes - define your project here
+  template: core/templates/project-template.toon
+  required: Yes
+
+ config/tech-stack.toon:
+  purpose: Technology stack (languages, frameworks, tools)
+  created_by: Manual configuration
+  edit: Yes - specify your tech stack
+  required: Yes
+  examples: Python+FastAPI, Node+Express, Go+Fiber, etc
+
+ config/quality-standards.toon:
+  purpose: Quality requirements (coverage, linters, security)
+  created_by: Manual configuration
+  edit: Yes - set your quality bars
+  required: Yes
+  defaults: Provided, can customize
+
+ config/workflows.toon:
+  purpose: Git workflow and branching strategy
+  created_by: Manual configuration
+  edit: Yes - customize workflow if needed
+  required: Yes
+  defaults: git-flow with develop branch
+
+ config/team.toon:
+  purpose: Available agent roles and capabilities
+  created_by: Manual configuration
+  edit: Yes - add new roles if needed
+  required: Yes
+  extensible: Add custom agent roles here
+
+core_protocols[3]:
+ core/protocols/task-lifecycle.toon:
+  purpose: Define task state transitions (ready→claimed→completed)
+  edit: No (core framework logic)
+  version: 1.0.0
+  compatibility: All agents must follow this protocol
+
+ core/protocols/git-coordination.toon:
+  purpose: Git branching strategy and atomic operations
+  edit: No (core framework logic)
+  version: 1.0.0
+  compatibility: All agents coordinate via this protocol
+
+ core/protocols/agent-handshake.toon:
+  purpose: Agent initialization and context loading
+  edit: No (core framework logic)
+  version: 1.0.0
+  compatibility: All agents initialize via this protocol
+
+core_templates[3]:
+ core/templates/task-template.toon:
+  purpose: Empty schema for task files
+  used_by: Architect agent when creating tasks
+  edit: No (standardized format)
+
+ core/templates/project-template.toon:
+  purpose: Empty schema for project specification
+  used_by: Product Owner agent
+  edit: No (standardized format)
+
+ core/templates/architecture-template.toon:
+  purpose: Empty schema for architecture documentation
+  used_by: Architect agent
+  edit: No (standardized format)
+
+core_roles[4]:
+ core/roles/product-owner.toon:
+  purpose: Product Owner agent behavior definition
+  responsibility: Define requirements and acceptance criteria
+  workflow: Gather requirements → Create project spec
+  edit: No (core framework logic)
+
+ core/roles/architect.toon:
+  purpose: Architect agent behavior definition
+  responsibility: Design architecture and create task breakdown
+  workflow: Read spec → Design system → Create tasks
+  edit: No (core framework logic)
+
+ core/roles/engineer.toon:
+  purpose: Software Engineer agent behavior definition
+  responsibility: Implement features with tests
+  workflow: Claim → Implement → Test → PR → Complete
+  edit: No (core framework logic)
+
+ core/roles/reviewer.toon:
+  purpose: Code Reviewer agent behavior definition
+  responsibility: Quality assurance and code review
+  workflow: Load PR → Review → Approve or request changes
+  edit: No (core framework logic)
+
+entry_points[5]:
+ start/README.md:
+  purpose: Documentation for agent entry points
+  audience: Developers invoking agents
+  edit: No (unless adding new roles)
+
+ start/product-owner.toon:
+  purpose: Entry point for Product Owner agent
+  invocation: claude start/product-owner.toon
+  delegates_to: core/roles/product-owner.toon
+  edit: No (thin wrapper)
+
+ start/architect.toon:
+  purpose: Entry point for Architect agent
+  invocation: claude start/architect.toon
+  delegates_to: core/roles/architect.toon
+  edit: No (thin wrapper)
+
+ start/engineer.toon:
+  purpose: Entry point for Software Engineer agent
+  invocation: claude start/engineer.toon
+  delegates_to: core/roles/engineer.toon
+  edit: No (thin wrapper)
+
+ start/reviewer.toon:
+  purpose: Entry point for Code Reviewer agent
+  invocation: claude start/reviewer.toon
+  delegates_to: core/roles/reviewer.toon
+  edit: No (thin wrapper)
+
+helper_scripts[5]:
+ scripts/README.md:
+  purpose: Documentation for helper scripts
+  audience: Developers and agents using scripts
+  edit: No
+
+ scripts/claim-task.sh:
+  purpose: Atomically claim a task (first-commit-wins)
+  usage: ./scripts/claim-task.sh <agent-id> [project] [branch]
+  atomic: Yes
+  edit: Optional (customize if needed)
+
+ scripts/complete-task.sh:
+  purpose: Mark task as completed, unblock dependents
+  usage: ./scripts/complete-task.sh <task-id> <agent-id> <pr-url> [project] [branch]
+  atomic: Yes
+  edit: Optional (customize if needed)
+
+ scripts/heartbeat-task.sh:
+  purpose: Update task heartbeat to prevent auto-release
+  usage: ./scripts/heartbeat-task.sh <task-id> <agent-id> [project]
+  frequency: Every 10-15 minutes
+  edit: Optional (customize if needed)
+
+ scripts/release-stalled.sh:
+  purpose: Release stalled tasks (no heartbeat > 30 min)
+  usage: ./scripts/release-stalled.sh [project] [branch]
+  automation: Run periodically via orchestrator
+  edit: Optional (customize if needed)
+
+state_directory[2]:
+ state/README.md:
+  purpose: Documentation for state directory
+  edit: No
+
+ state/.gitkeep:
+  purpose: Ensure state/ directory tracked by Git
+  edit: No
+
+runtime_artifacts:
+ state/{project-id}/architecture.toon:
+  purpose: System architecture documentation
+  created_by: Architect agent
+  location: state/{project-id}/architecture.toon
+  git_tracked: Yes
+  template: core/templates/architecture-template.toon
+
+ state/{project-id}/tasks/TASK-*.toon:
+  purpose: Available tasks ready for claiming
+  created_by: Architect agent
+  location: state/{project-id}/tasks/
+  git_tracked: Yes
+  template: core/templates/task-template.toon
+  status: ready or pending
+
+ state/{project-id}/claimed/TASK-*.toon:
+  purpose: Tasks currently being worked on
+  created_by: Engineer agent (via claim operation)
+  location: state/{project-id}/claimed/
+  git_tracked: Yes
+  includes: claim metadata (agent ID, timestamp, heartbeat)
+
+ state/{project-id}/completed/TASK-*.toon:
+  purpose: Finished tasks
+  created_by: Engineer agent (via complete operation)
+  location: state/{project-id}/completed/
+  git_tracked: Yes
+  includes: completion metadata (agent ID, timestamp, PR URL)
+
+file_organization:
+ read_only[21]:
+  BOOTSTRAP.md
+  VERSION.toon
+  framework_manifest.toon
+  core/protocols/*.toon (3 files)
+  core/templates/*.toon (3 files)
+  core/roles/*.toon (4 files)
+  start/README.md
+  start/*.toon (4 files)
+  scripts/README.md
+  state/README.md
+  state/.gitkeep
+
+ user_editable[5]:
+  config/project.toon
+  config/tech-stack.toon
+  config/quality-standards.toon
+  config/workflows.toon
+  config/team.toon
+
+ optional_editable[4]:
+  scripts/claim-task.sh
+  scripts/complete-task.sh
+  scripts/heartbeat-task.sh
+  scripts/release-stalled.sh
+
+ runtime_generated[4]:
+  state/{project}/architecture.toon
+  state/{project}/tasks/*.toon
+  state/{project}/claimed/*.toon
+  state/{project}/completed/*.toon
+
+portability_requirements:
+ must_copy[32]:
+  All files in this manifest
+  Entire .agents-core/ directory structure
+
+ must_customize[5]:
+  config/project.toon (required)
+  config/tech-stack.toon (required)
+  config/quality-standards.toon (optional - has defaults)
+  config/workflows.toon (optional - has defaults)
+  config/team.toon (optional - has defaults)
+
+ must_not_edit[16]:
+  core/ directory (all files)
+  start/ directory entry points (thin wrappers)
+  Documentation files
+  Templates
+
+installation_checklist:
+ step_1: Copy entire .agents-core/ directory to target repository
+ step_2: Edit config/project.toon (define your project)
+ step_3: Edit config/tech-stack.toon (specify technologies)
+ step_4: Review config/quality-standards.toon (customize if needed)
+ step_5: Review config/workflows.toon (customize if needed)
+ step_6: Run architect agent: claude start/architect.toon
+ step_7: Verify state/{project}/ directory created with tasks
+ step_8: Run engineer agents to start implementation
+
+validation:
+ required_files_present[5]:
+  config/project.toon must exist
+  config/tech-stack.toon must exist
+  config/quality-standards.toon must exist
+  config/workflows.toon must exist
+  config/team.toon must exist
+
+ required_directories[5]:
+  config/ must exist
+  core/ must exist (with subdirs: protocols, templates, roles)
+  scripts/ must exist
+  start/ must exist
+  state/ must exist
+
+extensibility:
+ add_new_role[4]:
+  Create core/roles/{new-role}.toon
+  Create start/{new-role}.toon
+  Update config/team.toon
+  Document in start/README.md
+
+ add_new_protocol[2]:
+  Create core/protocols/{new-protocol}.toon
+  Reference in relevant role definitions
+
+ add_new_script[2]:
+  Create scripts/{new-script}.sh
+  Document in scripts/README.md
+
+backward_compatibility:
+ version_1.0.0: Initial release
+ future_versions: Will maintain config/ file format compatibility
+
+metadata:
+ created_at: 2025-11-19T00:00:00Z
+ created_by: architect-agent
+ framework: agents-core
+ manifest_version: 1.0.0

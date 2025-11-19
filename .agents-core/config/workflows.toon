@@ -1,0 +1,245 @@
+workflows:
+ description: Git workflow and development processes
+ version: 1.0.0
+
+branching_strategy: git-flow
+branching_documentation: core/protocols/git-coordination.toon
+
+branches:
+ main:
+  purpose: Production-ready stable code
+  protection: true
+  requires_pr: true
+  requires_review: true
+  review_count: 1
+  auto_merge: false
+
+ coordination_branch:
+  name: develop
+  purpose: Agent coordination and integration
+  protection: false
+  requires_pr: false
+  allows_agent_commits: true
+  agent_operations[3]:
+   Task claiming
+   Task completion
+   Heartbeat updates
+
+ feature_branches:
+  prefix: feature/TASK-
+  created_from: develop
+  merged_to: develop
+  naming_format: "{prefix}{task-id}-{short-description}"
+  example: feature/TASK-001-user-auth
+  delete_after_merge: true
+
+ fix_branches:
+  prefix: fix/TASK-
+  created_from: develop
+  merged_to: develop
+  naming_format: "{prefix}{task-id}-{short-description}"
+  example: fix/TASK-042-password-validation
+
+ hotfix_branches:
+  prefix: hotfix/
+  created_from: main
+  merged_to: main and develop
+  naming_format: "{prefix}{issue-description}"
+  example: hotfix/critical-security-patch
+  requires_immediate_review: true
+
+agent_coordination:
+ claim_branch: develop
+ claim_atomic: true
+ claim_method: First-commit-wins (Git atomic push)
+
+ heartbeat_interval_minutes: 15
+ heartbeat_stale_threshold_minutes: 30
+ auto_release_stalled_tasks: true
+
+ completion_branch: develop
+ completion_triggers[2]:
+  PR merged to develop
+  Manual completion script
+
+pr_workflow:
+ create_pr:
+  base_branch: develop
+  head_branch: feature/TASK-{id}-{description}
+  title_format: "{task-id}: {task.title}"
+  title_requirement: Must include TASK-{id} for automation
+
+ pr_description_template: |
+  ## Summary
+  {High-level summary of implementation}
+
+  ## Task
+  Implements {task.id}
+  See state/{project}/claimed/{task.id}.toon
+
+  ## Implementation Details
+  {Key technical decisions and approach}
+
+  ## Acceptance Criteria
+  {For each criterion from task.acceptance_criteria}
+  - [x] {criterion}
+
+  ## Testing
+  - Test coverage: {percentage}%
+  - All tests passing: ✓
+  - Linting clean: ✓
+  - Type checking clean: ✓
+  - Security scans clean: ✓
+
+  ## Changes
+  {List of files created/modified}
+
+  ## Unblocks
+  {List tasks that this PR unblocks}
+
+ pr_checks_required[8]:
+  Backend tests
+  Frontend tests
+  Backend linting
+  Frontend linting
+  Backend type checking
+  Frontend type checking
+  Security scanning
+  Code coverage
+
+ pr_review:
+  required_approvals: 1
+  automated_review: optional (reviewer agent)
+  human_review: recommended for critical features
+
+ pr_merge:
+  strategy: squash
+  delete_branch: true
+  auto_complete_task: true
+
+release_workflow:
+ frequency: weekly (or per milestone)
+
+ process[6]:
+  1. Verify all milestone tasks completed
+  2. Create PR: develop → main
+  3. Run full test suite
+  4. Human review and approval
+  5. Merge to main
+  6. Tag release (v1.0.0, v1.1.0, etc)
+
+ versioning: Semantic Versioning (semver.org)
+ version_format: v{major}.{minor}.{patch}
+ tagging: Git tags on main branch
+
+git_hooks:
+ pre_commit[3]:
+  Format code (black, prettier)
+  Run linters
+  Run type checkers
+
+ pre_push[2]:
+  Run tests
+  Check coverage
+
+ commit_msg:
+  validate: Commit message format
+  require: Task ID in message
+
+automation:
+ ci_cd_platform: GitHub Actions
+
+ workflows[5]:
+  test: Run on every push
+  lint: Run on every push
+  security: Run on every PR
+  deploy_staging: On merge to develop
+  deploy_production: On merge to main
+
+ auto_task_completion:
+  enabled: true
+  trigger: PR merged with TASK-{id} in title
+  action: Move task to state/{project}/completed/
+
+ stale_task_release:
+  enabled: true
+  check_interval_minutes: 30
+  threshold_minutes: 30
+  action: Move task back to state/{project}/tasks/
+
+git_configuration:
+ default_branch: main
+ protected_branches[1]:
+  main
+
+ merge_strategies:
+  feature_to_develop: squash
+  develop_to_main: merge commit (preserves history)
+
+ commit_signing: optional (recommended)
+
+conflict_resolution:
+ task_claim_conflict:
+  symptom: git push fails when claiming
+  resolution: Rollback, pull, try different task
+
+ merge_conflict:
+  symptom: PR cannot be merged due to conflicts
+  resolution: Rebase feature branch on latest develop
+
+ race_condition:
+  prevention: Atomic Git operations
+  resolution: First to push wins, others retry
+
+development_environments:
+ local:
+  setup: Docker Compose
+  database: PostgreSQL in container
+  cache: Redis in container
+  hot_reload: Enabled for backend and frontend
+
+ staging:
+  deploy_trigger: Merge to develop
+  purpose: Integration testing
+  data: Synthetic test data
+  external_services: Sandbox/test mode
+
+ production:
+  deploy_trigger: Merge to main (after approval)
+  purpose: Live user traffic
+  data: Real user data
+  external_services: Production mode
+  monitoring: Full observability
+
+code_freeze:
+ before_release: 24 hours
+ emergency_fixes: Hotfix branch only
+ communication: Notify team via commit message
+
+rollback_procedure:
+ identify_issue: Monitoring alerts or user reports
+ create_hotfix: Branch from last good commit on main
+ fix_and_test: Implement fix with tests
+ expedited_review: Fast-track PR approval
+ deploy: Merge to main and develop
+ post_mortem: Document incident and learnings
+
+observability:
+ task_progress:
+  command: ls state/{project}/tasks/ state/{project}/claimed/ state/{project}/completed/
+  metrics: Count tasks in each state
+
+ agent_activity:
+  command: git log --grep="\[AGENT-"
+  metrics: Claims, completions, heartbeats per agent
+
+ project_health:
+  ready_tasks: Tasks available for claiming
+  in_progress_tasks: Tasks currently claimed
+  completed_tasks: Tasks finished
+  blocked_tasks: Tasks with unmet dependencies
+
+metadata:
+ created_at: 2025-11-19T00:00:00Z
+ last_updated: 2025-11-19T00:00:00Z
+ compatible_with: core/protocols/*.toon

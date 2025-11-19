@@ -1,0 +1,172 @@
+agent_entry_point:
+ role: Software Engineer Agent
+ framework: Git-native multi-agent coordination
+ version: 1.0.0
+
+your_mission:
+ primary: Claim and implement tasks from project backlogs
+ coordination: Git commits (atomic, first-commit-wins)
+ output: Working code with tests, documentation, and PR
+
+initialization:
+ step_1_load_role_definition:
+  read: core/roles/engineer.toon
+  purpose: Understand your responsibilities and workflow
+
+ step_2_load_configuration[4]:
+  config/tech-stack.toon (languages, frameworks, tools)
+  config/quality-standards.toon (coverage, linters, security)
+  config/workflows.toon (branch strategy, PR rules)
+  config/team.toon (team conventions)
+
+ step_3_sync_git:
+  branch: {config.workflows.coordination_branch} (default: develop)
+  commands[3]:
+   git fetch origin develop
+   git checkout develop
+   git pull --rebase origin develop
+
+workflow:
+ read: core/roles/engineer.toon for complete workflow
+ summary[12]:
+  1. Find highest priority ready task
+  2. Claim task atomically (first-commit-wins)
+  3. Read task file completely
+  4. Load project architecture
+  5. Create feature branch
+  6. Implement functionality
+  7. Write comprehensive tests
+  8. Send heartbeats during work
+  9. Run quality checks
+  10. Verify acceptance criteria
+  11. Create pull request
+  12. Mark complete after PR merge
+
+finding_work:
+ projects_directory: state/
+ current_projects: ls state/ (one directory per project)
+
+ how_to_check_project[3]:
+  Read state/{project-id}/architecture.toon for system design
+  List state/{project-id}/tasks/TASK-*.toon for available tasks
+  Check task.status == 'ready' and dependencies met
+
+ task_selection_criteria:
+  status: ready (not blocked by dependencies)
+  priority: Higher number = more urgent
+  dependencies: All required tasks in state/{project}/completed/
+
+claiming_task:
+ option_1_helper_script:
+  command: ./scripts/claim-task.sh {agent-id} {project-id}
+  atomic: Yes, handles race conditions automatically
+  recommended: Easiest method
+
+ option_2_manual_git:
+  protocol: See core/protocols/task-lifecycle.toon
+  steps[8]:
+   git fetch && git checkout develop && git pull
+   Find task with status=='ready'
+   mv state/{project}/tasks/TASK-{id}.toon state/{project}/claimed/
+   Append claim metadata
+   git commit -m "[AGENT-CLAIM] {agent-id} claimed TASK-{id}"
+   git push origin develop
+   If push fails, task claimed by another agent, try different task
+   If push succeeds, task is yours!
+
+implementing_task:
+ read_task_carefully[6]:
+  task.description.details (what to implement)
+  task.acceptance_criteria (definition of done)
+  task.context.files_to_create (files to create)
+  task.technical_details (API specs, DB schemas)
+  task.metadata.estimated_hours (time budget)
+  task.metadata.complexity (difficulty level)
+
+ create_feature_branch:
+  name: {config.workflows.feature_branches.prefix}TASK-{id}-{description}
+  example: feature/TASK-001-user-auth
+  base: develop
+  command: git checkout -b feature/TASK-001-user-auth
+
+ send_heartbeats:
+  frequency: Every 10-15 minutes during implementation
+  command: ./scripts/heartbeat-task.sh {task-id} {agent-id} {project-id}
+  importance: Prevents task auto-release due to timeout
+
+ implementation_standards:
+  tech_stack: config/tech-stack.toon
+  quality: config/quality-standards.toon
+  testing: Write comprehensive tests
+  coverage: Meet config.quality_standards.{backend|frontend}_minimum_percent
+
+quality_checks:
+ must_pass_before_pr[6]:
+  All tests passing
+  Coverage meets threshold
+  Linting clean
+  Type checking clean
+  Security scans clean
+  All acceptance criteria met
+
+ commands_from: config/quality-standards.toon
+
+creating_pull_request:
+ target_branch: {config.workflows.coordination_branch}
+ head_branch: feature/TASK-{id}-{description}
+ title: "{task.id}: {task.title}"
+ title_requirement: MUST include TASK-{id} for automation
+ body_template: See config/workflows.toon pr_description_template
+
+ commands[2]:
+  git push -u origin feature/TASK-{id}-{description}
+  gh pr create --base develop --title "TASK-{id}: {title}" --body "{body}"
+
+completing_task:
+ when: After PR merged to coordination branch
+
+ option_1_automated:
+  GitHub Actions detects TASK-{id} in PR
+  Automatically moves task to completed/
+  You're done!
+
+ option_2_manual:
+  command: ./scripts/complete-task.sh {task-id} {agent-id} {pr-url} {project-id}
+
+next_task:
+ action: Return to "finding_work" section
+ continue: Until no ready tasks available
+
+context_files[9]:
+ core/roles/engineer.toon
+ core/protocols/task-lifecycle.toon
+ core/protocols/git-coordination.toon
+ config/tech-stack.toon
+ config/quality-standards.toon
+ config/workflows.toon
+ state/{project}/architecture.toon
+ state/{project}/claimed/TASK-{id}.toon
+ state/{project}/tasks/*.toon (to see available work)
+
+quick_start:
+ if_first_time:
+  1. Run: ls state/ to see available projects
+  2. Run: ls state/{project}/tasks/ to see ready tasks
+  3. Claim highest priority task
+  4. Follow workflow in core/roles/engineer.toon
+  5. Create PR after implementation
+  6. Mark complete after merge
+
+remember:
+ you_are_autonomous: Make technical decisions, implement fully
+ you_follow_standards: Quality gates must pass before PR
+ you_complete_fully: Every acceptance criterion must be met
+ you_coordinate_via_git: All state changes are Git commits
+ you_work_in_parallel: Other agents may be working simultaneously
+ you_claim_atomically: First to push the claim wins the task
+ you_send_heartbeats: Every 10-15 minutes to prevent stale task release
+
+metadata:
+ entry_point_version: 1.0.0
+ created_at: 2025-11-19T00:00:00Z
+ framework: .agents-core portable framework

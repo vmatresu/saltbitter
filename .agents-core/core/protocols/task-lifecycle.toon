@@ -1,0 +1,103 @@
+protocol: Task Lifecycle Management
+version: 1.0.0
+purpose: Define state transitions for tasks in multi-agent coordination
+
+states[3]:
+ ready: Task available for claiming, all dependencies met
+ claimed: Agent actively working on task
+ completed: Task finished, PR merged, dependencies unblocked
+
+state_transitions:
+ ready_to_claimed:
+  trigger: Agent executes atomic claim operation
+  mechanism: Git first-commit-wins (move file, commit, push)
+  location: state/{project}/tasks/TASK-{id}.toon → state/{project}/claimed/TASK-{id}.toon
+  metadata_added[3]:
+   claim.claimed_by: {agent-id}
+   claim.claimed_at: {ISO-8601 timestamp}
+   claim.last_heartbeat: {ISO-8601 timestamp}
+  race_condition_handling: If push fails, task already claimed by another agent
+
+ claimed_to_completed:
+  trigger: PR merged to coordination branch
+  mechanism: Manual completion or automated via PR merge hook
+  location: state/{project}/claimed/TASK-{id}.toon → state/{project}/completed/TASK-{id}.toon
+  metadata_added[3]:
+   completion.completed_by: {agent-id}
+   completion.completed_at: {ISO-8601 timestamp}
+   completion.pr_url: {GitHub PR URL}
+  side_effects: Unblock dependent tasks (update their status to 'ready')
+
+ claimed_to_ready:
+  trigger: Heartbeat timeout (no update for > stale_threshold_minutes)
+  mechanism: Automated via release-stalled script or manual intervention
+  location: state/{project}/claimed/TASK-{id}.toon → state/{project}/tasks/TASK-{id}.toon
+  metadata_removed: claim section deleted
+  reason: Agent crashed, network failure, or abandoned work
+
+claiming_protocol:
+ step_1_fetch: git fetch origin {coordination-branch}
+ step_2_checkout: git checkout {coordination-branch}
+ step_3_pull: git pull --rebase origin {coordination-branch}
+ step_4_verify: Check task file still exists and status == 'ready'
+ step_5_move: mv state/{project}/tasks/TASK-{id}.toon state/{project}/claimed/TASK-{id}.toon
+ step_6_append_metadata: Add claim section with agent ID and timestamp
+ step_7_commit: git commit -m "[AGENT-CLAIM] {agent-id} claimed TASK-{id}"
+ step_8_push: git push origin {coordination-branch}
+ step_9_handle_conflict: If push fails, rollback and try different task
+
+completion_protocol:
+ step_1_verify: All acceptance criteria met, tests passing
+ step_2_pr_merged: Confirm PR merged to coordination branch
+ step_3_checkout: git checkout {coordination-branch}
+ step_4_pull: git pull origin {coordination-branch}
+ step_5_move: mv state/{project}/claimed/TASK-{id}.toon state/{project}/completed/TASK-{id}.toon
+ step_6_append_metadata: Add completion section with agent ID, timestamp, PR URL
+ step_7_unblock_dependents: Find tasks with dependencies.required containing TASK-{id}
+ step_8_update_dependents: For each dependent, check if all dependencies now completed
+ step_9_mark_ready: If all dependencies met, update dependent task status to 'ready'
+ step_10_commit: git commit -m "[AGENT-COMPLETE] {agent-id} completed TASK-{id}"
+ step_11_push: git push origin {coordination-branch}
+
+heartbeat_protocol:
+ purpose: Prevent task stalling when agent crashes or network fails
+ interval_minutes: 10-15 (configurable per task)
+ stale_threshold_minutes: 30 (configurable in config/workflows.toon)
+ mechanism: Update claim.last_heartbeat timestamp in claimed task file
+ command: ./scripts/heartbeat-task.sh {task-id} {agent-id} {project}
+ automated_release: Orchestrator periodically runs release-stalled.sh
+
+task_selection_criteria:
+ filter_ready: Only tasks with status == 'ready'
+ check_dependencies: Verify all dependencies.required tasks exist in state/{project}/completed/
+ prioritize: Sort by priority (descending), then complexity (ascending)
+ claim_highest: Agent claims highest priority task available
+
+dependency_management:
+ dependency_types[2]:
+  required: Tasks that MUST complete before this task can start
+  blocks: Tasks that CANNOT start until this task completes
+ validation:
+  no_circular_deps: Architect must ensure no cycles in dependency graph
+  no_self_deps: Task cannot depend on itself
+ format:
+  dependencies.required[N]: List of TASK-{id} strings
+  dependencies.blocks[M]: List of TASK-{id} strings (informational only)
+
+concurrency_guarantees:
+ atomic_claims: Git's atomic push ensures exactly one agent claims a task
+ no_double_work: Two agents cannot work on same task simultaneously
+ parallel_execution: Multiple agents work on independent tasks in parallel
+ eventual_consistency: All agents see same state after git pull
+
+error_recovery:
+ claim_conflict: Agent tries next available task
+ stale_task: Automated release after heartbeat timeout
+ failed_completion: Manual intervention or re-claim task
+ network_partition: Agent retries with exponential backoff
+
+metadata:
+ protocol_version: 1.0.0
+ created_at: 2025-11-19T00:00:00Z
+ framework: Git-native multi-agent coordination
+ compatible_with: TOON 1.0, Git 2.0+
