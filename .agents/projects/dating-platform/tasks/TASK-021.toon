@@ -4,7 +4,7 @@ task:
  title: Build React Native mobile applications
  type: mobile
  priority: 7
- status: blocked
+ status: ready
 
 description:
  summary: Create iOS and Android apps using React Native and Expo
