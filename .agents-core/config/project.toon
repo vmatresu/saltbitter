@@ -1,68 +1,199 @@
 project:
- id: example-project
- name: Example Project
- tagline: A template project specification
+ id: saltbitter-dating-platform
+ name: SaltBitter Dating Platform
+ tagline: Psychology-informed dating platform prioritizing user well-being over engagement metrics
  version: 1.0.0
- status: planning
+ status: active_development
 
 mission:
- primary: {Define your core mission}
- approach: {How you'll achieve it}
- north_star_metric: {Key success metric}
+ primary: Help people build healthier relationships through psychology-informed matching, transparent AI tools, and a supportive community—without exploiting loneliness or addiction
+ approach: Attachment theory-based matching (40% algorithm weight) + transparent AI companions + ethical monetization + community support
+ north_star_metric: 6-Month Relationship Rate of 22% (vs 8-12% industry average)
 
-business_goals[3]:
- {Business goal 1}
- {Business goal 2}
- {Business goal 3}
+business_goals[6]:
+ Launch MVP with attachment theory matching in Month 2
+ Achieve 144,500 active users by Month 12
+ Reach $189k MRR by Month 12 with 10.3% conversion rate
+ Maintain LTV/CAC ratio >11:1 through ethical monetization
+ Achieve break-even by Month 16 (Q2 Year 2)
+ Build defensible moat through therapist partnerships and community events
 
-user_stories[3]{id,role,action,benefit,priority}:
- US-001,user,{action},{benefit},10
- US-002,user,{action},{benefit},9
- US-003,user,{action},{benefit},8
+user_stories[15]{id,role,action,benefit,priority}:
+ US-001,user,complete free 25-question attachment assessment,understand my attachment style and relationship patterns,10
+ US-002,user,receive personalized attachment insights,learn how to build healthier relationships,10
+ US-003,user,get 5-10 quality daily matches,find compatible partners based on attachment theory,10
+ US-004,user,see attachment compatibility scores,understand why we're matched,9
+ US-005,user,practice conversations with AI companions (clearly labeled with 🤖),build confidence before real matches,8
+ US-006,user,opt-in/opt-out of AI features,maintain control over AI interactions (SB 243 compliance),10
+ US-007,user,receive communication coaching,improve my messaging based on attachment patterns,7
+ US-008,premium_user,access unlimited matches and advanced filters,find more compatible partners faster,8
+ US-009,elite_user,receive AI relationship coaching,develop better communication and boundary-setting skills,7
+ US-010,user,attend virtual events and workshops,build community and practice social skills,6
+ US-011,user,export all my data (GDPR),maintain control over my personal information,9
+ US-012,user,delete my account and data within 30 days,exercise my right to be forgotten,9
+ US-013,user,verify my photos,feel safe knowing matches are real people,8
+ US-014,user,report unsafe behavior,protect myself and the community,10
+ US-015,user,track my relationship progress,celebrate milestones and measure growth,6
 
 technical_constraints:
- compliance_required[1]:
-  {Any compliance requirements - GDPR, HIPAA, etc}
+ compliance_required[5]:
+  EU AI Act Article 52 (AI transparency obligations)
+  GDPR Article 9 (special category data - psychological assessments)
+  California SB 243 (AI disclosure and opt-out requirements)
+  CCPA (California privacy rights)
+  SOC 2 Type II (planned Month 12)
 
  stack:
-  backend: {See config/tech-stack.toon}
-  frontend: {See config/tech-stack.toon}
-  database: {See config/tech-stack.toon}
-  infrastructure: {See config/tech-stack.toon}
+  backend: Python 3.11+ with FastAPI 0.104+ (See config/tech-stack.toon)
+  frontend: React 18 + TypeScript, React Native + Expo (See config/tech-stack.toon)
+  database: PostgreSQL 15 (primary), Redis 7 (cache/sessions) (See config/tech-stack.toon)
+  infrastructure: AWS ECS Fargate, RDS Multi-AZ, ElastiCache (See config/tech-stack.toon)
 
  performance:
+  api_response_p50_ms: 100
   api_response_p95_ms: 200
   api_response_p99_ms: 500
+  database_query_p95_ms: 50
+  match_generation_time_s: 60
+  concurrent_users: 10000
 
  security:
-  authentication: JWT
-  encryption: TLS 1.3
-  data_protection: {Your requirements}
+  authentication: JWT with 15-min access + 7-day refresh tokens
+  encryption: TLS 1.3 for transit, AES-256 for data at rest
+  data_protection: End-to-end encryption for messages, AWS Secrets Manager
+  photo_verification: AWS Rekognition for face detection
+  content_moderation: Perspective API + custom models + manual review queue
 
 quality_standards:
  code_coverage_min_percent: 85
- required_checks[6]:
-  All tests passing
-  Linting clean
-  Type checking clean
-  Security scan passing
-  Code coverage meets threshold
-  Build succeeds
+ required_checks[8]:
+  All tests passing (pytest, jest)
+  Linting clean (Ruff, ESLint)
+  Type checking clean (MyPy strict, TypeScript strict)
+  Security scan passing (Bandit, npm audit)
+  Code coverage meets threshold (≥85% backend, ≥70% frontend)
+  Build succeeds (Docker images)
+  Ethical audit passing (dark pattern detection)
+  Performance benchmarks met (API p95 <200ms)
 
-success_metrics[3]{metric,target}:
- {Metric 1},{Target}
- {Metric 2},{Target}
- {Metric 3},{Target}
+success_metrics[10]{metric,target,rationale}:
+ Active Users Month 12,144500,Aggressive but achievable growth trajectory
+ Conversion Rate Month 12,10.3%,Industry-leading through ethical value proposition
+ Monthly Churn Month 12,4.7%,Superior retention via psychology-first approach
+ MRR Month 12,$189000,Strong monetization without exploitation
+ LTV/CAC Ratio Month 12,11.6:1,Excellent unit economics prove sustainable model
+ Match-to-Conversation Rate,47%,High engagement from quality matches
+ First Date Rate,35%,Real-world success validates matching algorithm
+ 6-Month Relationship Rate,22%,2.5x industry average proves mission success
+ Attachment Assessment Completion,85%,High completion shows user value perception
+ Ethical Audit Score,85/100,Maintain high ethical standards throughout growth
 
 implementation_phases:
  phase_1_foundation:
   duration_months: 2
-  deliverables[3]:
-   {Deliverable 1}
-   {Deliverable 2}
-   {Deliverable 3}
+  deliverables[8]:
+   Infrastructure setup (AWS, Terraform, CI/CD, Docker)
+   Authentication system (JWT, OAuth integration)
+   User registration and profile management
+   Photo upload and verification (AWS S3, Rekognition)
+   Attachment theory assessment (25 questions, ECR-R based)
+   Basic matching algorithm v1.0 (attachment compatibility)
+   GDPR/CCPA compliance (consent management, data export)
+   Security hardening (penetration testing, encryption)
+
+ phase_2_ai_features:
+  duration_months: 2
+  deliverables[4]:
+   AI practice companions (GPT-4 integration, 5 personas)
+   AI transparency system (EU AI Act + SB 243 compliance)
+   Communication coaching (Premium tier, attachment-informed)
+   Ethical audit framework (automated testing)
+
+ phase_3_monetization:
+  duration_months: 2
+  deliverables[4]:
+   Subscription system (Stripe, 3 tiers: Free, Premium, Elite)
+   Microtransactions (boosts, super likes, icebreakers)
+   Events platform (virtual/local events, ticketing, RSVP)
+   Revenue optimization (A/B testing, conversion funnels)
+
+ phase_4_growth:
+  duration_months: 6
+  deliverables[4]:
+   Marketing and acquisition (SEO, influencers, paid ads)
+   Community building (forums, success stories, ambassadors)
+   Platform maturity (video dating, analytics dashboard)
+   Break-even achievement (Month 16 target)
+
+core_differentiators[4]:
+ Attachment Theory Matching: Only platform using validated attachment theory for compatibility (40% algorithm weight, 87% success for Secure-Anxious pairings)
+ Transparent AI: All AI clearly labeled (🤖 badge), practice companions for skill-building not deception, full opt-out mechanisms (EU AI Act + SB 243 compliant)
+ Ethical Monetization: No pay-to-win (free users get same match quality), fair pricing ($12.99 Premium, $29.99 Elite), spending safeguards ($50/$100 warnings)
+ Psychology-First: Clinical psychologist leadership, therapist partnerships, mental health resources, boundary-setting prompts, vulnerable user protection
+
+revenue_model:
+ subscription_tiers[3]{name,price_monthly,key_features}:
+  Free,$0,"5-10 quality matches/day, unlimited AI practice, basic messaging, attachment assessment"
+  Premium,$12.99,"Unlimited matches, advanced filters, read receipts, priority customer support"
+  Elite,$29.99,"AI coaching, virtual events access, profile boosting, exclusive features"
+
+ revenue_breakdown[3]{stream,percent_of_total}:
+  Subscriptions,70
+  Microtransactions,24
+  Events,6
+
+ year_1_targets[5]{metric,value}:
+  Active Users,144500
+  Paying Users,14885
+  Annual Recurring Revenue,$2.3M
+  Customer Acquisition Cost,$2.80
+  Lifetime Value,$32.50
+
+risk_mitigation[4]{risk,impact,mitigation}:
+ EU AI Act penalties (€35M),Catastrophic,Quarterly compliance audits + legal review + DPO + automated testing
+ Data breach (psychological data),Catastrophic,End-to-end encryption + penetration testing + incident response plan + insurance
+ Low conversion (<7%),High,Aggressive A/B testing + flexible pricing + value optimization + user feedback loops
+ Competitor copies features,Medium,Deepen moat via therapist network + community events + data network effects + brand positioning
+
+compliance_architecture:
+ gdpr:
+  data_protection_officer: Required role for psychological data processing
+  consent_management: Explicit opt-in for attachment assessment (Article 9)
+  data_export: Automated export API within 30 days
+  data_deletion: 30-day retention policy after account deletion
+  breach_notification: 72-hour automated alerting to supervisory authority
+
+ eu_ai_act:
+  ai_labeling: 🤖 badge on all AI profiles (Article 52)
+  transparency_logs: All AI interactions logged with timestamps
+  opt_out_mechanism: User settings for AI features (pre and post signup)
+  audit_trail: Quarterly compliance reports + automated testing
+
+ california_sb_243:
+  disclosure_onboarding: AI disclosure shown during signup
+  opt_out_before_signup: Pre-registration opt-out available
+  human_alternatives: All AI features optional (practice with real users)
+  quarterly_audits: Compliance verification + public transparency reports
+
+team_structure:
+ launch_team_size: 9-10 FTE (including contractors)
+ key_roles[8]:
+  CTO (Co-Founder) - Technical leadership
+  Backend Engineers (2 FTE) - API, database, matching algorithm
+  Frontend Engineer (1 FTE) - Web + mobile app
+  Product Designer (1 FTE) - UX/UI design
+  Head of Marketing (1 FTE) - Growth and acquisition
+  Chief Psychology Officer (1 FTE) - Clinical psychologist, attachment theory expert
+  DevOps Engineer (0.5 FTE) - Infrastructure, CI/CD
+  AI Ethics Advisor (0.5 FTE) - Compliance, ethical review
 
 metadata:
- created_at: {ISO-8601 timestamp}
- created_by: product-owner-agent
- next_step: architect-creates-tasks
+ created_at: 2025-11-19T00:00:00Z
+ created_by: architect-agent
+ last_updated: 2025-11-19T00:00:00Z
+ based_on: docs/dating-platform comprehensive specifications
+ market_size: $5.6B global dating app market (20% CAGR through 2030)
+ funding_required: $2.5M seed round (18-month runway)
+ break_even_target: Month 16 (Q2 Year 2)
+ exit_strategy: Acquisition by Match Group/Bumble or IPO (5-7 year horizon)
+ next_step: Execute Phase 1 implementation (Foundation)
