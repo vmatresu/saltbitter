@@ -31,6 +31,15 @@ from .ai_interaction import AIInteraction  # noqa: E402, F401
 from .subscription import Subscription, Payment  # noqa: E402, F401
 from .event import Event, EventRegistration  # noqa: E402, F401
 from .compliance import ConsentLog, ComplianceLog  # noqa: E402, F401
+from .moderation import (  # noqa: E402, F401
+    ModerationRecord,
+    UserReport,
+    UserBlock,
+    ModerationAppeal,
+    ModerationStatus,
+    ContentType,
+    ReportReason,
+)
 from services.messaging.models import BlockedUser, MessageReport  # noqa: E402, F401
 
 
@@ -49,6 +58,13 @@ __all__ = [
     "EventRegistration",
     "ConsentLog",
     "ComplianceLog",
+    "ModerationRecord",
+    "UserReport",
+    "UserBlock",
+    "ModerationAppeal",
+    "ModerationStatus",
+    "ContentType",
+    "ReportReason",
     "BlockedUser",
     "MessageReport",
 ]
