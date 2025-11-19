@@ -4,7 +4,7 @@ task:
  title: Build AI practice companions with GPT-4
  type: backend
  priority: 6
- status: blocked
+ status: ready
 
 description:
  summary: Create AI-powered practice conversation partners with clear disclosure

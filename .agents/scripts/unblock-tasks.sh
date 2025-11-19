@@ -33,8 +33,8 @@ for task_file in .agents/projects/$PROJECT/tasks/TASK-*.toon; do
     continue
   fi
 
-  # Extract required dependencies
-  DEPS=$(grep -A 20 "^dependencies:" "$task_file" | grep -A 10 "required\[" | grep "TASK-" | sed 's/^[[:space:]]*//' || true)
+  # Extract required dependencies (only from required section, not blocks)
+  DEPS=$(sed -n '/^ required\[/,/^ blocks\[/{/^  TASK-/p}' "$task_file" | sed 's/^[[:space:]]*//' || true)
 
   # If no dependencies, unblock it
   if [ -z "$DEPS" ]; then
