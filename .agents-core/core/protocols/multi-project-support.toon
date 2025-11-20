@@ -1,0 +1,235 @@
+protocol: Multi-Project Support in Single Codebase
+version: 2.0.0
+purpose: Enable multiple independent projects to coexist using same framework instance
+design_principle: Simple, reliable, composable
+
+motivation:
+ use_case_1: Monorepo with multiple services (auth-service, payment-service, etc.)
+ use_case_2: Multiple products in same organization
+ use_case_3: Experimentation (stable-product + experimental-features)
+ benefit: Share framework infrastructure, avoid duplication
+
+architecture_decision:
+ chosen_approach: Project-scoped state directories with shared framework
+ rejected_alternatives[2]:
+  separate_framework_per_project: Too much duplication
+  single_global_task_pool: No isolation, complex dependencies
+
+directory_structure:
+ framework_location: .agents-core/ (shared, read-only)
+
+ project_instances:
+  location: .agents/{project-id}/
+  structure:
+   .agents/{project-id}/
+   ├── project.toon              # Project specification
+   ├── architecture.toon         # System design
+   ├── tasks/                    # Available tasks
+   │   ├── TASK-001.toon
+   │   ├── TASK-002.toon
+   │   └── ...
+   ├── claimed/                  # In-progress tasks
+   │   └── TASK-003.toon
+   └── completed/                # Finished tasks
+       ├── TASK-001.toon
+       └── TASK-002.toon
+
+ alternative_structure:
+  location: .agents/projects/{project-id}/ (also supported)
+  note: Both structures work, choose one per repository
+
+ example_monorepo:
+  .agents-core/                  # Framework (copy once)
+  .agents/auth-service/          # Authentication microservice
+  .agents/payment-service/       # Payment microservice
+  .agents/notification-service/  # Notification microservice
+  .agents/api-gateway/           # API Gateway
+
+project_isolation:
+ task_namespacing:
+  format: {project-id}/TASK-{number}
+  example: auth-service/TASK-001, payment-service/TASK-001
+  benefit: Same task IDs can exist in different projects
+
+ dependency_boundaries:
+  within_project: Tasks can depend on other tasks in same project
+  cross_project: Tasks cannot depend on tasks in other projects
+  rationale: Keeps dependency graphs simple and project-independent
+
+ branch_strategy:
+  option_1_shared_develop: All projects share develop branch
+  option_2_project_branches: develop-auth, develop-payment, etc.
+  recommendation: Shared develop (simpler), project-specific feature branches
+
+agent_project_selection:
+ automatic_discovery:
+  mechanism: Agent scans .agents/ or .agents/projects/ for project directories
+  selection: Agent chooses highest priority ready task across all projects
+  benefit: Load balancing across projects automatically
+
+ explicit_project:
+  usage: ./claim-task.sh {agent-id} {specific-project}
+  benefit: Agent specialization (some agents work only on auth-service)
+
+ mixed_approach:
+  generalist_agents: Claim tasks from any project (no filter)
+  specialist_agents: Claim tasks from specific project (filter applied)
+  example: Security agents only claim security-related tasks
+
+claiming_algorithm_multi_project:
+ step_1_discover: List all projects in .agents/ or .agents/projects/
+ step_2_scan: For each project, find ready tasks
+ step_3_check_deps: Verify dependencies within project scope
+ step_4_prioritize: Sort all tasks by priority across all projects
+ step_5_claim: Claim highest priority task (regardless of project)
+
+ pseudo_code: |
+   projects = discover_projects()
+   all_ready_tasks = []
+   for project in projects:
+     tasks = find_ready_tasks(project)
+     for task in tasks:
+       if dependencies_met(task, project):
+         all_ready_tasks.append({project, task, priority})
+
+   sorted_tasks = sort_by_priority(all_ready_tasks)
+   claim(sorted_tasks[0])
+
+dependency_resolution:
+ scoping:
+  within_project: TASK-001 in auth-service can depend on TASK-002 in auth-service
+  cross_project: Dependencies across projects NOT supported (by design)
+
+ verification:
+  search_path: .agents/{project}/completed/TASK-*.toon
+  check: All required dependencies exist in completed/ directory
+
+ cross_project_coordination:
+  mechanism: Manual coordination via project specifications
+  example: payment-service project spec notes "requires auth-service API"
+  validation: Human verification before architect creates tasks
+
+configuration_per_project:
+ project_toon:
+  location: .agents/{project-id}/project.toon
+  contents:
+   name: {project name}
+   description: {what it does}
+   tech_stack: {languages, frameworks}
+   dependencies: {external dependencies, NOT task dependencies}
+
+ architecture_toon:
+  location: .agents/{project-id}/architecture.toon
+  contents: System design, components, data models
+
+ shared_config:
+  location: .agents-core/config/
+  applies_to: All projects (quality standards, workflows)
+
+example_monorepo_setup:
+ scenario: E-commerce platform with 4 services
+
+ project_1_auth:
+  location: .agents/auth-service/
+  tasks: 12 tasks (user auth, session management, OAuth)
+  priority_range: 8-10 (critical)
+  dependencies: None (foundational service)
+
+ project_2_products:
+  location: .agents/products-service/
+  tasks: 20 tasks (catalog, inventory, search)
+  priority_range: 6-8 (high)
+  dependencies: Requires auth-service API (manual coordination)
+
+ project_3_orders:
+  location: .agents/orders-service/
+  tasks: 18 tasks (cart, checkout, order processing)
+  priority_range: 7-9 (high-critical)
+  dependencies: Requires auth-service and products-service
+
+ project_4_analytics:
+  location: .agents/analytics-service/
+  tasks: 8 tasks (metrics, dashboards, reports)
+  priority_range: 3-5 (medium)
+  dependencies: Can read from all services
+
+ agent_behavior:
+  generalist_agents: Claim TASK-001 from auth-service (priority 10)
+  after_completion: Claim TASK-002 from orders-service (priority 9)
+  naturally_sequences: High priority tasks across all projects get done first
+
+scalability_considerations:
+ small_scale:
+  projects: 1-3 projects
+  tasks: 10-50 tasks total
+  agents: 1-10 concurrent agents
+  overhead: Minimal, shared framework is efficient
+
+ medium_scale:
+  projects: 4-10 projects
+  tasks: 50-200 tasks total
+  agents: 10-50 concurrent agents
+  consideration: May want agent specialization
+
+ large_scale:
+  projects: 10-50 projects
+  tasks: 200-1000 tasks total
+  agents: 50-200 concurrent agents
+  optimizations[3]:
+   Agent specialization by project
+   Separate coordination branches per project
+   Hierarchical task organization
+
+simplicity_guidelines:
+ keep_it_simple: Don't over-engineer until you need it
+ start_small: Begin with 1-2 projects
+ add_projects_incrementally: Prove each works before adding more
+ avoid_premature_optimization: Don't build complex routing until needed
+
+migration_strategies:
+ single_to_multi_project:
+  step_1: Move existing state to .agents/{project-id}/
+  step_2: Update scripts to support project parameter
+  step_3: Add new projects alongside existing one
+  step_4: Agents automatically discover both
+
+ multi_repo_to_monorepo:
+  step_1: Copy .agents-core/ once to monorepo
+  step_2: Migrate each project to .agents/{project-id}/
+  step_3: Update CI/CD to run agents across all projects
+  step_4: Archive old repositories
+
+testing_multi_project:
+ unit_test: Project discovery finds all projects
+ integration_test: Agent claims task from correct project
+ cross_project_test: Verify isolation (task from project A doesn't affect project B)
+
+observability:
+ per_project_metrics:
+  ready_tasks: Count per project
+  claimed_tasks: Count per project
+  completed_tasks: Count per project
+  completion_rate: Tasks/day per project
+
+ dashboard_example:
+  auth-service: 12 total, 2 ready, 1 claimed, 9 completed (75%)
+  products-service: 20 total, 8 ready, 2 claimed, 10 completed (50%)
+  orders-service: 18 total, 12 ready, 0 claimed, 6 completed (33%)
+  analytics-service: 8 total, 8 ready, 0 claimed, 0 completed (0%)
+
+limitations:
+ no_cross_project_deps: Tasks cannot depend on tasks from other projects
+ manual_coordination: Service-level dependencies managed manually
+ shared_branch: All projects share same coordination branch (can be changed)
+
+when_not_to_use_multi_project:
+ truly_independent_codebases: Use separate repos with separate framework instances
+ different_organizations: Security/access control not built for multi-tenancy
+ vastly_different_stacks: Framework optimized for similar tech stacks
+
+metadata:
+ protocol_version: 2.0.0
+ created_at: 2025-11-20T00:00:00Z
+ author: architect-agent
+ framework: agents-core
+ complexity: Medium (simple by design)
