@@ -47,6 +47,9 @@ pydantic[email]==2.5.0
 boto3==1.29.7
 botocore==1.32.7
 
+# Google Perspective API
+google-api-python-client==2.108.0
+
 # Image Processing
 Pillow==10.1.0
 

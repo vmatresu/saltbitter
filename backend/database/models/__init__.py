@@ -32,6 +32,16 @@ from .subscription import Subscription, Payment  # noqa: E402, F401
 from .event import Event, EventRegistration  # noqa: E402, F401
 from .compliance import ConsentLog, ComplianceLog  # noqa: E402, F401
 from services.messaging.models import BlockedUser, MessageReport  # noqa: E402, F401
+from .moderation import (  # noqa: E402, F401
+    ModerationQueue,
+    UserReport,
+    UserBlock,
+    ModerationAppeal,
+    ModerationAuditLog,
+    ModerationStatus,
+    ModerationAction,
+    ReportReason,
+)
 
 
 __all__ = [
@@ -51,4 +61,12 @@ __all__ = [
     "ComplianceLog",
     "BlockedUser",
     "MessageReport",
+    "ModerationQueue",
+    "UserReport",
+    "UserBlock",
+    "ModerationAppeal",
+    "ModerationAuditLog",
+    "ModerationStatus",
+    "ModerationAction",
+    "ReportReason",
 ]
